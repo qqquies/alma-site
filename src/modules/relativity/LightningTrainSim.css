@@ -1,0 +1,36 @@
+.lt canvas {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lt .sim-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.lt .sim-slider input:disabled {
+  opacity: 0.5;
+}
+
+.lt-log {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  max-width: 640px;
+}
+
+.lt-log-item {
+  border-left: 3px solid var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 7%, transparent);
+  border-radius: 0 10px 10px 0;
+  padding: 8px 14px;
+  font-size: 15px;
+}
+
+.lt-conclusion {
+  font-size: 15px;
+  color: var(--color-accent-strong);
+}

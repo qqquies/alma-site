@@ -1,7 +1,7 @@
 import DefinitionBlock from '../../../components/lesson/DefinitionBlock'
 import PersonCard from '../../../components/lesson/PersonCard'
-import SimPlaceholder from '../../../components/lesson/SimPlaceholder'
 import BallTrainSim from '../BallTrainSim'
+import LightningTrainSim from '../LightningTrainSim'
 import maxwellPhoto from '../../../assets/maxwell.jpg'
 
 function ClassicalCrisisLesson() {
@@ -143,7 +143,7 @@ function ClassicalCrisisLesson() {
         абсолютно.
       </p>
 
-      <SimPlaceholder title="поезд и молнии" />
+      <LightningTrainSim />
 
       <h2>Итоги урока</h2>
       <ul className="lesson-summary">
