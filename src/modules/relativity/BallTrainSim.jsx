@@ -3,10 +3,14 @@ import useAnimationFrame from '../../lib/useAnimationFrame'
 import './BallTrainSim.css'
 
 const VIEW_W = 640
-const VIEW_H = 240
-const GROUND_Y = 190
-const TRAIN_W = 230
-const TRAIN_H = 62
+const VIEW_H = 290
+const RAIL_Y = 250
+const LOCO_W = 140
+const LOCO_H = 44
+const WAGON_W = 120
+const WAGON_H = 40
+const GAP = 10
+const TOTAL_LEN = LOCO_W + GAP + WAGON_W
 const TIME_ZOOM = 4
 
 function BallTrainSim() {
@@ -16,7 +20,7 @@ function BallTrainSim() {
   const [ballSpeed, setBallSpeed] = useState(5)
   const [ballFlying, setBallFlying] = useState(false)
 
-  const trainX = useRef(40)
+  const frontX = useRef(-TOTAL_LEN - 40)
   const ballX = useRef(0)
   const ballActive = useRef(false)
 
@@ -31,7 +35,7 @@ function BallTrainSim() {
   function handleThrow() {
     if (ballActive.current) return
     ballActive.current = true
-    ballX.current = trainX.current + TRAIN_W - 48
+    ballX.current = frontX.current - 52
     setBallFlying(true)
   }
 
@@ -42,49 +46,93 @@ function BallTrainSim() {
     ctx.fillText(text, x, y)
   }
 
+  function drawTrain(ctx) {
+    const fx = frontX.current
+    const roofY = RAIL_Y - LOCO_H
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)'
+    ctx.fillRect(0, RAIL_Y + 9, VIEW_W, 2)
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'
+    ctx.fillStyle = '#223038'
+    ctx.beginPath()
+    ctx.moveTo(fx - LOCO_W, roofY + 6)
+    ctx.quadraticCurveTo(fx - LOCO_W, roofY, fx - LOCO_W + 14, roofY)
+    ctx.lineTo(fx - 26, roofY)
+    ctx.quadraticCurveTo(fx, roofY, fx, roofY + 22)
+    ctx.lineTo(fx, RAIL_Y)
+    ctx.lineTo(fx - LOCO_W, RAIL_Y)
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
+
+    ctx.fillStyle = '#3a4a52'
+    ctx.fillRect(fx - 54, roofY + 9, 36, 18)
+    ctx.fillRect(fx - 100, roofY + 9, 36, 18)
+
+    ctx.strokeStyle = '#55625c'
+    ctx.beginPath()
+    ctx.moveTo(fx - 78, roofY)
+    ctx.lineTo(fx - 88, roofY - 14)
+    ctx.moveTo(fx - 98, roofY)
+    ctx.lineTo(fx - 88, roofY - 14)
+    ctx.moveTo(fx - 102, roofY - 14)
+    ctx.lineTo(fx - 74, roofY - 14)
+    ctx.stroke()
+
+    const wx = fx - LOCO_W - GAP
+    ctx.fillStyle = '#223038'
+    ctx.fillRect(wx - WAGON_W, RAIL_Y - WAGON_H, WAGON_W, WAGON_H)
+    ctx.strokeRect(wx - WAGON_W, RAIL_Y - WAGON_H, WAGON_W, WAGON_H)
+    ctx.fillStyle = '#3a4a52'
+    ctx.fillRect(wx - 108, RAIL_Y - WAGON_H + 11, 32, 18)
+    ctx.fillRect(wx - 62, RAIL_Y - WAGON_H + 11, 32, 18)
+
+    ctx.fillStyle = '#141a1d'
+    for (const wheelDx of [fx - 34, fx - 106, wx - 30, wx - 92]) {
+      ctx.beginPath()
+      ctx.arc(wheelDx, RAIL_Y + 2, 8, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.stroke()
+    }
+
+    ctx.fillStyle = '#55625c'
+    ctx.fillRect(fx - LOCO_W - 8, RAIL_Y - 14, 10, 4)
+
+    ctx.fillStyle = '#c9d4cd'
+    ctx.beginPath()
+    ctx.arc(fx - 36, roofY + 17, 4, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
   function drawFrame() {
     const ctx = canvasRef.current.getContext('2d')
 
     ctx.fillStyle = '#131719'
     ctx.fillRect(0, 0, VIEW_W, VIEW_H)
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)'
-    ctx.fillRect(0, GROUND_Y + 9, VIEW_W, 2)
+    drawTrain(ctx)
 
-    const tx = trainX.current
-    const ty = GROUND_Y - TRAIN_H
-    ctx.fillStyle = '#223038'
-    ctx.fillRect(tx, ty, TRAIN_W, TRAIN_H)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'
-    ctx.strokeRect(tx, ty, TRAIN_W, TRAIN_H)
-    ctx.fillStyle = '#3a4a52'
-    ctx.fillRect(tx + TRAIN_W - 58, ty + 13, 36, 26)
-    ctx.fillRect(tx + 16, ty + 13, 150, 26)
+    ctx.fillStyle = '#20252a'
+    ctx.fillRect(40, 138, 180, 14)
+    ctx.fillStyle = '#181f24'
+    ctx.fillRect(52, 152, 10, 96)
+    ctx.fillRect(196, 152, 10, 96)
 
-    ctx.fillStyle = '#141a1d'
-    ctx.strokeStyle = '#55625c'
-    for (const wheelDx of [42, TRAIN_W - 42]) {
-      ctx.beginPath()
-      ctx.arc(tx + wheelDx, GROUND_Y + 2, 9, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.stroke()
-    }
-
-    const personX = tx + TRAIN_W - 40
     ctx.strokeStyle = '#c9d4cd'
     ctx.lineWidth = 2
     ctx.beginPath()
-    ctx.arc(personX, ty + 16, 5, 0, Math.PI * 2)
-    ctx.moveTo(personX, ty + 21)
-    ctx.lineTo(personX, GROUND_Y - 8)
+    ctx.arc(130, 112, 5, 0, Math.PI * 2)
+    ctx.moveTo(130, 117)
+    ctx.lineTo(130, 134)
     ctx.stroke()
     ctx.lineWidth = 1
 
-    drawLabel(ctx, `поезд: ${trainSpeed} м/с`, tx + TRAIN_W / 2, ty - 12)
+    drawLabel(ctx, 'человек на платформе', 130, 94)
 
     if (ballActive.current) {
       ctx.beginPath()
-      ctx.arc(ballX.current, GROUND_Y - 28, 7, 0, Math.PI * 2)
+      ctx.arc(ballX.current, RAIL_Y - 56, 7, 0, Math.PI * 2)
       ctx.fillStyle = '#6fcd97'
       ctx.shadowColor = '#6fcd97'
       ctx.shadowBlur = 14
@@ -93,8 +141,8 @@ function BallTrainSim() {
       drawLabel(
         ctx,
         `мяч: ${trainSpeed + ballSpeed} м/с`,
-        ballX.current,
-        GROUND_Y - 44,
+        Math.min(ballX.current, VIEW_W - 60),
+        RAIL_Y - 74,
       )
     }
   }
@@ -102,10 +150,9 @@ function BallTrainSim() {
   useAnimationFrame((dt) => {
     const scaledDt = dt * TIME_ZOOM
 
-    trainX.current += trainSpeed * scaledDt
-    if (trainX.current > VIEW_W + 80) {
-      trainX.current = -TRAIN_W - 80
-      if (!ballActive.current) ballX.current = 0
+    frontX.current += trainSpeed * scaledDt
+    if (frontX.current - TOTAL_LEN > VIEW_W + 60) {
+      frontX.current = -60
     }
 
     if (ballActive.current) {
@@ -124,8 +171,8 @@ function BallTrainSim() {
   return (
     <figure className="sim bt">
       <div className="sim-title">
-        Картина глазами человека на платформе. Анимация ускорена, но все
-        соотношения скоростей соблюдены точно.
+        Картина глазами человека на платформе (он наверху, на возвышении).
+        Анимация ускорена, но соотношения скоростей соблюдены точно.
       </div>
       <canvas ref={canvasRef} />
       <div className="sim-controls">
