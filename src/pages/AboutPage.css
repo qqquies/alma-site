@@ -1,0 +1,8 @@
+.about-placeholder {
+  color: var(--color-text-dim);
+  max-width: 640px;
+}
+
+.about-placeholder + .about-note {
+  margin-top: 16px;
+}

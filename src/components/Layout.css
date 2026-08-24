@@ -34,10 +34,6 @@
   color: var(--color-text);
 }
 
-.logo span {
-  color: var(--color-accent);
-}
-
 .nav {
   display: flex;
   flex-wrap: wrap;
@@ -51,7 +47,8 @@
   transition: color 0.15s, background 0.15s;
 }
 
-.nav a:hover {
+.nav a:hover,
+.nav a.active {
   color: var(--color-text);
   background: rgba(255, 255, 255, 0.06);
 }

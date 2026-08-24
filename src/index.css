@@ -41,3 +41,9 @@ button {
   font: inherit;
   cursor: pointer;
 }
+
+.page-title {
+  font-size: clamp(26px, 5vw, 40px);
+  letter-spacing: -0.5px;
+  margin-bottom: 24px;
+}

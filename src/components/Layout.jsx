@@ -1,9 +1,10 @@
+import { Link, NavLink } from 'react-router-dom'
 import './Layout.css'
 
 const NAV_ITEMS = [
-  { label: 'Главная', href: '#' },
-  { label: 'Модули', href: '#' },
-  { label: 'О проекте', href: '#' },
+  { label: 'Главная', to: '/' },
+  { label: 'Модули', to: '/modules' },
+  { label: 'О проекте', to: '/about' },
 ]
 
 function Layout({ children }) {
@@ -11,14 +12,18 @@ function Layout({ children }) {
     <div className="layout">
       <header className="header">
         <div className="container header-inner">
-          <a href="#" className="logo">
+          <Link to="/" className="logo">
             Alma
-          </a>
+          </Link>
           <nav className="nav">
             {NAV_ITEMS.map((item) => (
-              <a key={item.label} href={item.href}>
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => (isActive ? 'active' : undefined)}
+              >
                 {item.label}
-              </a>
+              </NavLink>
             ))}
           </nav>
         </div>
