@@ -1,7 +1,9 @@
 import DefinitionBlock from '../../../components/lesson/DefinitionBlock'
 import PersonCard from '../../../components/lesson/PersonCard'
+import Quiz from '../../../components/Quiz/Quiz'
 import BallTrainSim from '../BallTrainSim'
 import LightningTrainSim from '../LightningTrainSim'
+import classicalCrisisQuiz from '../quiz/classicalCrisisQuiz'
 import maxwellPhoto from '../../../assets/maxwell.jpg'
 
 function ClassicalCrisisLesson() {
@@ -161,42 +163,7 @@ function ClassicalCrisisLesson() {
         </li>
       </ul>
 
-      <h2>Вопросы для самопроверки</h2>
-      <details className="qa">
-        <summary>
-          Поезд едет со скоростью 30 м/с, пассажир бросает мяч вперёд со
-          скоростью 7 м/с относительно вагона. Какова скорость мяча для
-          человека на платформе?
-        </summary>
-        <p>
-          30 + 7 = 37 м/с. Это ньютоновское сложение скоростей; позже мы
-          увидим, что при скоростях, близких к скорости света, оно нарушается.
-        </p>
-      </details>
-      <details className="qa">
-        <summary>
-          Почему человек на платформе считает удары молний одновременными?
-        </summary>
-        <p>
-          Он стоит ровно посередине между двумя опорами. Свет от обеих
-          вспышек проходит до него одинаковый путь с одинаковой скоростью,
-          поэтому приходит в одно и то же мгновение. Раз вспышки пришли
-          вместе — ударились молнии тоже в один момент.
-        </p>
-      </details>
-      <details className="qa">
-        <summary>
-          Почему из постоянства скорости света следует, что для пассажира
-          поезда удары произошли в разное время?
-        </summary>
-        <p>
-          Пассажир в момент вспышек сидел ровно посередине между двумя
-          ударами, а свет обеих вспышек летел к нему с одинаковой скоростью.
-          Раз правая вспышка добралась до него первой, значит, и «стартовала»
-          она раньше. Для пассажира события неодновременны — хотя для
-          человека на платформе они одновременны.
-        </p>
-      </details>
+      <Quiz title="Проверь себя" questions={classicalCrisisQuiz} />
     </>
   )
 }
