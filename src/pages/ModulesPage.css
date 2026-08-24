@@ -1,9 +1,16 @@
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
 .module-card {
+  display: block;
+  color: inherit;
   background: var(--color-surface);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius);
   padding: 24px;
-  max-width: 480px;
   transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 

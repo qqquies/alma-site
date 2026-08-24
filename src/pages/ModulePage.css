@@ -1,0 +1,37 @@
+.back-link {
+  display: inline-block;
+  margin-bottom: 16px;
+  color: var(--color-text-dim);
+  font-size: 14px;
+}
+
+.back-link:hover {
+  color: var(--color-text);
+}
+
+.module-description {
+  color: var(--color-text-dim);
+  max-width: 640px;
+}
+
+.lessons-title {
+  font-size: 20px;
+  margin-block: 32px 12px;
+}
+
+.lesson-list {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.lesson-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+}
