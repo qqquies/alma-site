@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import { getModuleById } from '../modules/registry'
+import LightClockSim from '../modules/relativity/LightClockSim'
 import './ModulePage.css'
 
 function ModulePage() {
@@ -34,6 +35,13 @@ function ModulePage() {
           </li>
         ))}
       </ol>
+
+      {module.id === 'relativity' && (
+        <>
+          <h2 className="lessons-title">Интерактивная модель (прототип)</h2>
+          <LightClockSim />
+        </>
+      )}
     </section>
   )
 }
