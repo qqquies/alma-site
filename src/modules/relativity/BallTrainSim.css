@@ -1,0 +1,31 @@
+.bt canvas {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bt .sim-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.bt .sim-button:disabled:hover {
+  background: transparent;
+}
+
+.bt-sliders {
+  display: grid;
+  gap: 14px;
+  max-width: 640px;
+  margin-top: 16px;
+}
+
+.bt-result {
+  color: var(--color-text-dim);
+}
+
+.bt-result strong {
+  color: var(--color-accent-strong);
+}

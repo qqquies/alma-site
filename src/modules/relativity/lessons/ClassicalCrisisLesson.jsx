@@ -1,6 +1,7 @@
 import DefinitionBlock from '../../../components/lesson/DefinitionBlock'
 import PersonCard from '../../../components/lesson/PersonCard'
 import SimPlaceholder from '../../../components/lesson/SimPlaceholder'
+import BallTrainSim from '../BallTrainSim'
 import maxwellPhoto from '../../../assets/maxwell.jpg'
 
 function ClassicalCrisisLesson() {
@@ -43,7 +44,7 @@ function ClassicalCrisisLesson() {
         только <em>относительно</em> какой-то системы отсчёта.
       </DefinitionBlock>
 
-      <SimPlaceholder title="мяч в движущемся поезде" />
+      <BallTrainSim />
 
       <h2>2. Трещина в картине мира: свет</h2>
       <p>
