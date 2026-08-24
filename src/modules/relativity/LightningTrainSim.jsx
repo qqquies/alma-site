@@ -110,9 +110,18 @@ function LightningTrainSim() {
     ctx.fillStyle = '#55625c'
     ctx.fillRect(fx - LOCO_W - 8, RAIL_Y - 14, 10, 4)
 
+    ctx.strokeStyle = '#c9d4cd'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(fx - 36, roofY + 27)
+    ctx.lineTo(fx - 36, roofY + 18)
+    ctx.moveTo(fx - 36, roofY + 24)
+    ctx.lineTo(fx - 28, roofY + 20)
+    ctx.stroke()
+    ctx.lineWidth = 1
     ctx.fillStyle = '#c9d4cd'
     ctx.beginPath()
-    ctx.arc(fx - 36, roofY + 17, 4, 0, Math.PI * 2)
+    ctx.arc(fx - 36, roofY + 13, 4.5, 0, Math.PI * 2)
     ctx.fill()
   }
 

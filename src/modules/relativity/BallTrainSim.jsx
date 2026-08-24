@@ -46,6 +46,39 @@ function BallTrainSim() {
     ctx.fillText(text, x, y)
   }
 
+  function drawStickman(ctx, x, feetY) {
+    ctx.strokeStyle = '#c9d4cd'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.arc(x, feetY - 34, 5, 0, Math.PI * 2)
+    ctx.moveTo(x, feetY - 29)
+    ctx.lineTo(x, feetY - 12)
+    ctx.moveTo(x - 7, feetY - 22)
+    ctx.lineTo(x + 7, feetY - 22)
+    ctx.moveTo(x, feetY - 12)
+    ctx.lineTo(x - 6, feetY)
+    ctx.moveTo(x, feetY - 12)
+    ctx.lineTo(x + 6, feetY)
+    ctx.stroke()
+    ctx.lineWidth = 1
+  }
+
+  function drawPassenger(ctx, px, roofY) {
+    ctx.strokeStyle = '#c9d4cd'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(px, roofY + 27)
+    ctx.lineTo(px, roofY + 18)
+    ctx.moveTo(px, roofY + 24)
+    ctx.lineTo(px + 8, roofY + 20)
+    ctx.stroke()
+    ctx.lineWidth = 1
+    ctx.fillStyle = '#c9d4cd'
+    ctx.beginPath()
+    ctx.arc(px, roofY + 13, 4.5, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
   function drawTrain(ctx) {
     const fx = frontX.current
     const roofY = RAIL_Y - LOCO_H
@@ -99,10 +132,7 @@ function BallTrainSim() {
     ctx.fillStyle = '#55625c'
     ctx.fillRect(fx - LOCO_W - 8, RAIL_Y - 14, 10, 4)
 
-    ctx.fillStyle = '#c9d4cd'
-    ctx.beginPath()
-    ctx.arc(fx - 36, roofY + 17, 4, 0, Math.PI * 2)
-    ctx.fill()
+    drawPassenger(ctx, fx - 36, roofY)
   }
 
   function drawFrame() {
@@ -119,14 +149,7 @@ function BallTrainSim() {
     ctx.fillRect(52, 152, 10, 96)
     ctx.fillRect(196, 152, 10, 96)
 
-    ctx.strokeStyle = '#c9d4cd'
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.arc(130, 112, 5, 0, Math.PI * 2)
-    ctx.moveTo(130, 117)
-    ctx.lineTo(130, 134)
-    ctx.stroke()
-    ctx.lineWidth = 1
+    drawStickman(ctx, 130, 138)
 
     drawLabel(ctx, 'человек на платформе', 130, 94)
 
