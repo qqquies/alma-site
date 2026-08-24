@@ -69,8 +69,8 @@ function BallTrainSim() {
     ctx.beginPath()
     ctx.moveTo(px, roofY + 27)
     ctx.lineTo(px, roofY + 18)
-    ctx.moveTo(px, roofY + 24)
-    ctx.lineTo(px + 8, roofY + 20)
+    ctx.moveTo(px - 7, roofY + 22)
+    ctx.lineTo(px + 7, roofY + 22)
     ctx.stroke()
     ctx.lineWidth = 1
     ctx.fillStyle = '#c9d4cd'
