@@ -1,3 +1,5 @@
+import ClassicalCrisisLesson from './lessons/ClassicalCrisisLesson'
+
 const relativityModule = {
   id: 'relativity',
   title: 'Специальная теория относительности',
@@ -12,6 +14,9 @@ const relativityModule = {
     { id: 'length-contraction', title: 'Сокращение длины' },
     { id: 'mass-energy', title: 'Масса и энергия: E = mc²' },
   ],
+  lessonComponents: {
+    'classical-crisis': ClassicalCrisisLesson,
+  },
 }
 
 export default relativityModule

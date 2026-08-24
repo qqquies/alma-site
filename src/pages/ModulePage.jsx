@@ -28,12 +28,21 @@ function ModulePage() {
 
       <h2 className="lessons-title">Уроки</h2>
       <ol className="lesson-list">
-        {module.lessons.map((lesson) => (
-          <li key={lesson.id} className="lesson-item">
-            <span>{lesson.title}</span>
-            <span className="badge">Скоро</span>
-          </li>
-        ))}
+        {module.lessons.map((lesson) => {
+          const isAvailable = Boolean(module.lessonComponents?.[lesson.id])
+          return (
+            <li key={lesson.id} className={`lesson-item${isAvailable ? ' available' : ''}`}>
+              {isAvailable ? (
+                <Link to={`/modules/${module.id}/${lesson.id}`}>
+                  {lesson.title}
+                </Link>
+              ) : (
+                <span>{lesson.title}</span>
+              )}
+              <span className="badge">{isAvailable ? 'Открыт' : 'Скоро'}</span>
+            </li>
+          )
+        })}
       </ol>
 
       {module.id === 'relativity' && (
