@@ -1,16 +1,46 @@
-# React + Vite
+# Alma
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Интерактивная образовательная среда для школьников 7–9 классов: сложные идеи
+современной физики и математики изучаются самостоятельно — через объяснения,
+визуализации и небольшие интерактивные эксперименты.
 
-Currently, two official plugins are available:
+Название происходит от латинского выражения *Alma Mater* («кормящая мать») —
+традиционного обозначения места получения образования.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Стек
 
-## React Compiler
+- [Vite](https://vite.dev) + [React](https://react.dev)
+- [React Router](https://reactrouter.com) — навигация
+- Canvas 2D — интерактивные симуляции
+- Без бэкенда: статический сайт
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Команды
 
-## Expanding the Oxlint configuration
+```bash
+npm install    # установить зависимости
+npm run dev    # сервер разработки → http://localhost:5173
+npm run build  # production-сборка в папку dist
+npm run lint   # проверка кода
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Структура
+
+```
+src/
+├── components/   # переиспользуемые блоки (Layout, Quiz, блоки урока)
+├── modules/      # образовательные модули
+│   └── relativity/
+│       ├── index.js          # данные модуля и список уроков
+│       ├── lessons/          # страницы уроков
+│       ├── quiz/             # вопросы квизов (данные)
+│       └── *.jsx             # интерактивные симуляции
+├── pages/        # маршруты приложения
+└── lib/          # вспомогательные утилиты (цикл анимации)
+```
+
+Новый модуль добавляется созданием папки в `src/modules/` и одной строки в
+`src/modules/registry.js`.
+
+## Автор
+
+Школьный научно-практический проект.
