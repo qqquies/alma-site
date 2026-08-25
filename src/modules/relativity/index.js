@@ -1,5 +1,7 @@
 import ClassicalCrisisLesson from './lessons/ClassicalCrisisLesson'
 import ReferenceFramesLesson from './lessons/ReferenceFramesLesson'
+import PostulatesLesson from './lessons/PostulatesLesson'
+import SimultaneityLesson from './lessons/SimultaneityLesson'
 
 const relativityModule = {
   id: 'relativity',
@@ -18,6 +20,8 @@ const relativityModule = {
   lessonComponents: {
     'classical-crisis': ClassicalCrisisLesson,
     'reference-frames': ReferenceFramesLesson,
+    postulates: PostulatesLesson,
+    simultaneity: SimultaneityLesson,
   },
 }
 
