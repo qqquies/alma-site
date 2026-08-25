@@ -7,6 +7,12 @@
   color: var(--color-text-dim);
 }
 
+.lesson-note {
+  font-size: 14px;
+  color: var(--color-text-dim);
+  margin-bottom: 12px;
+}
+
 .lesson h2 {
   margin-block: 36px 14px;
   font-size: clamp(20px, 3.5vw, 26px);
