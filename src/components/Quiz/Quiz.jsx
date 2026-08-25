@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './Quiz.css'
 
 function Quiz({ title, questions }) {
+  const [started, setStarted] = useState(false)
   const [selected, setSelected] = useState({})
   const [checked, setChecked] = useState({})
 
@@ -23,10 +24,35 @@ function Quiz({ title, questions }) {
   function reset() {
     setSelected({})
     setChecked({})
+    setStarted(false)
+  }
+
+  if (!started) {
+    return (
+      <section className="quiz">
+        <h2>{title}</h2>
+        <div className="quiz-start">
+          <p>
+            Впереди проверка усвоенного материала. С момента начала текст
+            урока будет скрыт до самого конца — отвечай по памяти.
+          </p>
+          <p className="quiz-start-meta">
+            Вопросов: {questions.length}
+          </p>
+          <button
+            type="button"
+            className="sim-button"
+            onClick={() => setStarted(true)}
+          >
+            Начать проверку
+          </button>
+        </div>
+      </section>
+    )
   }
 
   return (
-    <section className="quiz">
+    <section className="quiz quiz--started">
       <h2>{title}</h2>
       {questions.map((question, index) => {
         const isChecked = Boolean(checked[question.id])

@@ -7,6 +7,26 @@
   font-size: clamp(20px, 3.5vw, 26px);
 }
 
+.quiz-start {
+  background: var(--color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  padding: 22px;
+}
+
+.quiz-start p {
+  color: var(--color-text-dim);
+  margin-bottom: 10px;
+}
+
+.quiz-start-meta {
+  font-size: 14px;
+}
+
+.quiz-start .sim-button {
+  margin-top: 6px;
+}
+
 .quiz-card {
   background: var(--color-surface);
   border: 1px solid rgba(255, 255, 255, 0.08);

@@ -160,6 +160,11 @@
   color: var(--color-text-dim);
 }
 
+.lesson:has(.quiz--started)
+  > *:not(.quiz--started):not(.page-title):not(.breadcrumbs) {
+  display: none;
+}
+
 @media (max-width: 520px) {
   .person-card {
     flex-direction: column;
