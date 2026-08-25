@@ -2,6 +2,7 @@ import ClassicalCrisisLesson from './lessons/ClassicalCrisisLesson'
 import ReferenceFramesLesson from './lessons/ReferenceFramesLesson'
 import PostulatesLesson from './lessons/PostulatesLesson'
 import SimultaneityLesson from './lessons/SimultaneityLesson'
+import TimeDilationLesson from './lessons/TimeDilationLesson'
 
 const relativityModule = {
   id: 'relativity',
@@ -22,6 +23,7 @@ const relativityModule = {
     'reference-frames': ReferenceFramesLesson,
     postulates: PostulatesLesson,
     simultaneity: SimultaneityLesson,
+    'time-dilation': TimeDilationLesson,
   },
 }
 
