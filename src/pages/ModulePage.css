@@ -35,3 +35,20 @@
   border-radius: var(--radius);
   padding: 14px 18px;
 }
+
+.exam-panel {
+  margin-top: 40px;
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+}
+
+.exam-panel .lessons-title {
+  margin-block: 0 8px;
+}
+
+.exam-link {
+  font-weight: 600;
+  color: var(--color-accent-strong);
+}

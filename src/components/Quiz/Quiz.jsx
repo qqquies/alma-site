@@ -1,15 +1,41 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { markLessonDone } from '../../lib/progress'
 import './Quiz.css'
 
-function Quiz({ title, questions }) {
+function gradeFor(ratio) {
+  if (ratio >= 0.9) return 5
+  if (ratio >= 0.75) return 4
+  if (ratio >= 0.6) return 3
+  return 2
+}
+
+const GRADE_MESSAGES = {
+  5: 'Отлично! Материал усвоен — можно двигаться дальше.',
+  4: 'Хорошо! Загляни в разбор вопросов, где ошиблись, и вперёд.',
+  3: 'Удовлетворительно. Материал стоит перечитать — дальше будет опираться на него.',
+  2: 'Неудовлетворительно. Пройди урок заново — без этой базы следующие уроки не понять.',
+}
+
+function Quiz({ title, questions, graded = false }) {
   const [started, setStarted] = useState(false)
   const [selected, setSelected] = useState({})
   const [checked, setChecked] = useState({})
+  const location = useLocation()
 
   const allChecked = questions.every((question) => checked[question.id])
   const score = questions.filter(
     (question) => checked[question.id] && selected[question.id] === question.correct,
   ).length
+  const ratio = questions.length > 0 ? score / questions.length : 0
+
+  useEffect(() => {
+    if (!allChecked) return
+    const match = location.pathname.match(/^\/modules\/([^/]+)\/([^/]+)$/)
+    if (match) {
+      markLessonDone(match[1], match[2])
+    }
+  }, [allChecked, location.pathname])
 
   function choose(questionId, optionIndex) {
     if (checked[questionId]) return
@@ -38,6 +64,7 @@ function Quiz({ title, questions }) {
           </p>
           <p className="quiz-start-meta">
             Вопросов: {questions.length}
+            {graded ? ' · За результат ставится оценка' : ''}
           </p>
           <button
             type="button"
@@ -111,7 +138,11 @@ function Quiz({ title, questions }) {
       })}
       {allChecked && (
         <div className="quiz-result">
-          Результат: {score} из {questions.length}.
+          <span>
+            {graded
+              ? `Результат: ${score} из ${questions.length}. Оценка: ${gradeFor(ratio)}. ${GRADE_MESSAGES[gradeFor(ratio)]}`
+              : `Результат: ${score} из ${questions.length}.`}
+          </span>
           <button type="button" className="sim-button" onClick={reset}>
             Пройти ещё раз
           </button>

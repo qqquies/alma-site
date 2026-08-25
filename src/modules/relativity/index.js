@@ -3,6 +3,9 @@ import ReferenceFramesLesson from './lessons/ReferenceFramesLesson'
 import PostulatesLesson from './lessons/PostulatesLesson'
 import SimultaneityLesson from './lessons/SimultaneityLesson'
 import TimeDilationLesson from './lessons/TimeDilationLesson'
+import LengthContractionLesson from './lessons/LengthContractionLesson'
+import MassEnergyLesson from './lessons/MassEnergyLesson'
+import moduleExamQuiz from './quiz/moduleExamQuiz'
 
 const relativityModule = {
   id: 'relativity',
@@ -24,6 +27,12 @@ const relativityModule = {
     postulates: PostulatesLesson,
     simultaneity: SimultaneityLesson,
     'time-dilation': TimeDilationLesson,
+    'length-contraction': LengthContractionLesson,
+    'mass-energy': MassEnergyLesson,
+  },
+  exam: {
+    title: 'Итоговая контрольная модуля',
+    questions: moduleExamQuiz,
   },
 }
 
