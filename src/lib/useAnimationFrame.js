@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react'
 
 export default function useAnimationFrame(callback, active = true) {
   const callbackRef = useRef(callback)
-  callbackRef.current = callback
+
+  useEffect(() => {
+    callbackRef.current = callback
+  })
 
   useEffect(() => {
     if (!active) return undefined

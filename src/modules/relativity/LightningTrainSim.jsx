@@ -48,6 +48,10 @@ function LightningTrainSim() {
     return LIGHT_SPEED * t
   }
 
+  function fmtTime(value) {
+    return value.toFixed(1).replace('.', ',')
+  }
+
   function drawBolt(ctx, x) {
     const baseY = RAIL_Y - 30
     ctx.strokeStyle = '#6fcd97'
@@ -229,10 +233,6 @@ function LightningTrainSim() {
     },
     phase === 'running',
   )
-
-  function fmtTime(value) {
-    return value.toFixed(1).replace('.', ',')
-  }
 
   const percent = Math.round(vFrac * 100)
 
