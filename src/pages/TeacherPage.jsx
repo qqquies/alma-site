@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import TeacherTabs from '../components/TeacherTabs'
 import { buildTest, DIFFICULTIES } from '../teacher/buildTest'
 import TOPICS, { getTopicById } from '../teacher/topics'
 import { SUBJECTS, getSubjectById } from '../teacher/subjects'
@@ -284,6 +285,7 @@ function TeacherPage() {
 
   return (
     <section>
+      <TeacherTabs />
       <h1 className="page-title">Для учителя</h1>
       <p className="teacher-intro">
         Конструктор контрольных работ. Выберите предмет, тему и сложность —

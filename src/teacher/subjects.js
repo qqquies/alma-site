@@ -11,7 +11,12 @@ export const SUBJECTS = [
     inTitle: 'физике',
     source: 'bank',
     grade: '7',
-    examples: [],
+    examples: [
+      'Скорость и ускорение',
+      'Сила и движение',
+      'Электрический ток',
+      'Свет и оптика',
+    ],
   },
   {
     id: 'algebra',
