@@ -13,7 +13,7 @@ export function TestSheet({ variant, meta, number }) {
         <span>{meta.date}</span>
       </div>
 
-      <h1 className="sheet-title">Контрольная работа по физике</h1>
+      <h1 className="sheet-title">{meta.workTitle || 'Контрольная работа'}</h1>
       <p className="sheet-topic">Тема: «{meta.topicTitle}»</p>
 
       <div className="sheet-row">
@@ -94,6 +94,7 @@ export function AnswerKey({ test, meta }) {
     <article className="sheet">
       <h1 className="sheet-title">Ключ ответов</h1>
       <p className="sheet-topic">
+        {meta.subjectTitle ? `${meta.subjectTitle} · ` : ''}
         {meta.topicTitle} · {meta.grade} класс
       </p>
 

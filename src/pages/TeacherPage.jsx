@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { buildTest, DIFFICULTIES } from '../teacher/buildTest'
 import TOPICS, { getTopicById } from '../teacher/topics'
+import { SUBJECTS, getSubjectById } from '../teacher/subjects'
+import { generateDraft, isMockMode } from '../teacher/ai'
+import DraftReview from '../teacher/DraftReview'
 import { TestSheet, AnswerKey } from '../teacher/TestSheet'
 import './TeacherPage.css'
 
@@ -37,7 +40,10 @@ function summarize(variant) {
 function TeacherPage() {
   const [profile, setProfile] = useState(loadProfile)
   const [settings, setSettings] = useState({
+    subjectId: 'physics',
     topicId: 'kinematics',
+    customSubject: '',
+    topic: '',
     count: 10,
     difficultyId: 'mixed',
     variantCount: 1,
@@ -47,8 +53,27 @@ function TeacherPage() {
     showAnswerForm: true,
   })
   const [test, setTest] = useState(null)
+  const [draft, setDraft] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
+  const subject = getSubjectById(settings.subjectId)
+  const isBank = subject.source === 'bank'
   const topic = getTopicById(settings.topicId)
+
+  // Название предмета: у «Другого предмета» его вводит учитель.
+  const subjectTitle =
+    subject.id === 'custom'
+      ? settings.customSubject.trim() || 'Другой предмет'
+      : subject.title
+
+  // Заголовок листа. Для известных предметов — «по физике»,
+  // для свободного — «по предмету „Биология“».
+  const workTitle = subject.inTitle
+    ? `Контрольная работа по ${subject.inTitle}`
+    : `Контрольная работа по предмету «${subjectTitle}»`
+
+  const topicTitle = isBank ? topic.title : settings.topic.trim()
 
   function update(field, value) {
     setSettings((prev) => ({ ...prev, [field]: value }))
@@ -58,44 +83,130 @@ function TeacherPage() {
     setProfile((prev) => ({ ...prev, [field]: value }))
   }
 
+  function handleSubject(value) {
+    const next = getSubjectById(value)
+    setSettings((prev) => ({
+      ...prev,
+      subjectId: value,
+      topic: '',
+      count: next.source === 'ai' ? Math.min(prev.count, 15) : prev.count,
+    }))
+    setError('')
+    if (next.grade) updateProfile('grade', next.grade)
+  }
+
   function handleTopic(value) {
     const next = getTopicById(value)
     update('topicId', value)
     if (next.grade) updateProfile('grade', next.grade)
   }
 
-  function generate(event) {
-    if (event) event.preventDefault()
+  function buildMeta() {
+    return {
+      school: profile.school,
+      teacher: profile.teacher,
+      subjectTitle,
+      workTitle,
+      topicTitle,
+      grade: profile.grade || subject.grade,
+      date: new Date().toLocaleDateString('ru-RU'),
+      minutes: settings.minutes,
+      showAnswerForm: settings.showAnswerForm,
+      showSolutions: settings.showSolutions,
+    }
+  }
 
+  function checkForm() {
+    if (!isBank && !settings.topic.trim()) {
+      return 'Введите тему работы — например, «Линейные уравнения».'
+    }
+    if (subject.id === 'custom' && !settings.customSubject.trim()) {
+      return 'Введите название предмета — оно попадёт в заголовок работы.'
+    }
+    return ''
+  }
+
+  // Путь 1: банк Alma. Задания и ответы считаются на устройстве.
+  function runBank() {
     const count = clamp(settings.count, 5, 20)
     const variantCount = clamp(settings.variantCount, 1, 2)
 
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
 
-    setTest(
-      buildTest({
-        topicId: settings.topicId,
-        count,
-        difficultyId: settings.difficultyId,
-        variantCount,
-      }),
-    )
+    const built = buildTest({
+      topicId: settings.topicId,
+      count,
+      difficultyId: settings.difficultyId,
+      variantCount,
+    })
 
+    setTest({ ...built, source: 'bank' })
+    setError('')
     window.scrollTo(0, 0)
   }
 
-  const meta = {
-    school: profile.school,
-    teacher: profile.teacher,
-    topicTitle: topic.title,
-    grade: profile.grade || topic.grade,
-    date: new Date().toLocaleDateString('ru-RU'),
-    minutes: settings.minutes,
-    showAnswerForm: settings.showAnswerForm,
-    showSolutions: settings.showSolutions,
+  // Путь 2: ИИ. Модель присылает черновик, а не готовую работу:
+  // ответы проходят проверку учителем на следующем экране.
+  async function runAI() {
+    if (loading) return
+
+    const problem = checkForm()
+    if (problem) {
+      setError(problem)
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const result = await generateDraft({
+        subject: subjectTitle,
+        grade: profile.grade || subject.grade,
+        topic: settings.topic.trim(),
+        count: clamp(settings.count, 5, 15),
+        difficulty: settings.difficultyId,
+        verify: true,
+      })
+
+      setDraft(result)
+      setTest(null)
+      window.scrollTo(0, 0)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
+  function submitForm(event) {
+    if (event) event.preventDefault()
+    if (isBank) runBank()
+    else runAI()
+  }
+
+  // Учитель проверил черновик — превращаем его в обычный вариант,
+  // чтобы печать работала тем же кодом, что и для банка.
+  function confirmDraft() {
+    if (!draft || draft.items.length === 0) return
+
+    const totalPoints = draft.items.reduce((sum, item) => sum + item.points, 0)
+    const seed = Math.floor(Math.random() * 900000) + 100000
+
+    setTest({
+      source: 'ai',
+      seedBase: seed,
+      variants: [{ seed, items: draft.items, totalPoints }],
+    })
+    setDraft(null)
+    window.scrollTo(0, 0)
+  }
+
+  const meta = buildMeta()
+
   if (test) {
+    const first = test.variants[0]
+
     return (
       <section>
         <div className="teacher-bar no-print">
@@ -110,8 +221,12 @@ function TeacherPage() {
             ← Изменить параметры
           </button>
           <div className="teacher-bar-actions">
-            <button type="button" className="t-btn" onClick={() => generate()}>
-              Другой вариант
+            <button
+              type="button"
+              className="t-btn"
+              onClick={() => (test.source === 'ai' ? runAI() : runBank())}
+            >
+              {test.source === 'ai' ? 'Сгенерировать заново' : 'Другой вариант'}
             </button>
             <button
               type="button"
@@ -129,7 +244,7 @@ function TeacherPage() {
           его можно не печатать для учеников.
         </p>
 
-        <p className="teacher-summary no-print">{summarize(test.variants[0])}</p>
+        <p className="teacher-summary no-print">{summarize(first)}</p>
 
         <div className="sheet-scroll">
           {test.variants.map((variant, index) => (
@@ -146,16 +261,61 @@ function TeacherPage() {
     )
   }
 
+  if (draft) {
+    return (
+      <>
+        {error && <p className="teacher-error no-print">{error}</p>}
+        <DraftReview
+          draft={draft}
+          meta={meta}
+          loading={loading}
+          onChange={(items) => setDraft((prev) => ({ ...prev, items }))}
+          onConfirm={confirmDraft}
+          onBack={() => {
+            setDraft(null)
+            setError('')
+            window.scrollTo(0, 0)
+          }}
+          onRegenerate={runAI}
+        />
+      </>
+    )
+  }
+
   return (
     <section>
       <h1 className="page-title">Для учителя</h1>
       <p className="teacher-intro">
-        Конструктор контрольных работ. Выберите тему и сложность — Alma соберёт
-        вариант с заданиями разного уровня, ключом ответов и паспортом работы,
-        который останется только распечатать.
+        Конструктор контрольных работ. Выберите предмет, тему и сложность —
+        Alma соберёт вариант с заданиями разного уровня, ключом ответов и
+        паспортом работы, который останется только распечатать.
       </p>
 
-      <form className="teacher-form" onSubmit={generate}>
+      <form className="teacher-form" onSubmit={submitForm}>
+        <h2 className="teacher-section">Предмет</h2>
+        <div className="teacher-field teacher-field--wide">
+          <span>Что проверяем</span>
+          <div className="subject-grid">
+            {SUBJECTS.map((item) => (
+              <button
+                type="button"
+                key={item.id}
+                className={`subject-chip${
+                  settings.subjectId === item.id ? ' subject-chip--active' : ''
+                }`}
+                onClick={() => handleSubject(item.id)}
+              >
+                {item.title}
+              </button>
+            ))}
+          </div>
+          <p className="subject-source">
+            {isBank
+              ? 'Банк Alma: задания и ответы считаются на устройстве. Работает без интернета.'
+              : 'Черновик ИИ: модель предложит задания, вы проверите ответы перед печатью.'}
+          </p>
+        </div>
+
         <h2 className="teacher-section">Оформление работы</h2>
         <div className="teacher-grid">
           <label className="teacher-field">
@@ -181,6 +341,7 @@ function TeacherPage() {
             <input
               type="text"
               value={profile.grade}
+              placeholder="8"
               onChange={(event) => updateProfile('grade', event.target.value)}
             />
           </label>
@@ -200,29 +361,60 @@ function TeacherPage() {
 
         <h2 className="teacher-section">Содержание</h2>
         <div className="teacher-grid">
-          <label className="teacher-field teacher-field--wide">
-            <span>Тема</span>
-            <select
-              value={settings.topicId}
-              onChange={(event) => handleTopic(event.target.value)}
-            >
-              {TOPICS.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.title}
-                  {item.grade ? ` (${item.grade} класс)` : ''}
-                </option>
-              ))}
-            </select>
-          </label>
+          {subject.id === 'custom' && (
+            <label className="teacher-field">
+              <span>Название предмета</span>
+              <input
+                type="text"
+                value={settings.customSubject}
+                placeholder="Биология"
+                onChange={(event) =>
+                  update('customSubject', event.target.value)
+                }
+              />
+            </label>
+          )}
+
+          {isBank ? (
+            <label className="teacher-field teacher-field--wide">
+              <span>Тема</span>
+              <select
+                value={settings.topicId}
+                onChange={(event) => handleTopic(event.target.value)}
+              >
+                {TOPICS.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                    {item.grade ? ` (${item.grade} класс)` : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <label className="teacher-field teacher-field--wide">
+              <span>Тема</span>
+              <input
+                type="text"
+                value={settings.topic}
+                placeholder={
+                  subject.examples[0]
+                    ? `Например, «${subject.examples[0]}»`
+                    : 'Например, «Строение клетки»'
+                }
+                onChange={(event) => update('topic', event.target.value)}
+              />
+            </label>
+          )}
+
           <label className="teacher-field">
             <span>Заданий</span>
             <input
               type="number"
               min="5"
-              max="20"
+              max={isBank ? 20 : 15}
               value={settings.count}
               onChange={(event) =>
-                update('count', clamp(event.target.value, 5, 20))
+                update('count', clamp(event.target.value, 5, isBank ? 20 : 15))
               }
             />
           </label>
@@ -239,24 +431,52 @@ function TeacherPage() {
               ))}
             </select>
           </label>
-          <label className="teacher-field">
-            <span>Вариантов</span>
-            <select
-              value={settings.variantCount}
-              onChange={(event) =>
-                update('variantCount', clamp(event.target.value, 1, 2))
-              }
-            >
-              <option value="1">Один</option>
-              <option value="2">Два (для соседей по парте)</option>
-            </select>
-          </label>
+          {isBank && (
+            <label className="teacher-field">
+              <span>Вариантов</span>
+              <select
+                value={settings.variantCount}
+                onChange={(event) =>
+                  update('variantCount', clamp(event.target.value, 1, 2))
+                }
+              >
+                <option value="1">Один</option>
+                <option value="2">Два (для соседей по парте)</option>
+              </select>
+            </label>
+          )}
         </div>
 
-        {settings.count > 8 && settings.topicId !== 'mixed' && (
+        {!isBank && subject.examples.length > 0 && (
+          <div className="topic-hints">
+            <span>Примеры тем:</span>
+            {subject.examples.map((example) => (
+              <button
+                type="button"
+                key={example}
+                className="topic-hint"
+                onClick={() => update('topic', example)}
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {isBank && settings.count > 8 && settings.topicId !== 'mixed' && (
           <p className="teacher-note">
             Для работы длиннее 8 заданий лучше подойдёт «Сборная работа по всем
             темам»: в одной узкой теме типы задач начнут повторяться.
+          </p>
+        )}
+
+        {!isBank && (
+          <p className="teacher-note">
+            ИИ присылает черновик: вы увидите каждое задание, сможете
+            поправить формулировку и отметить верный ответ. Обычно генерация
+            занимает 15–40 секунд.
+            {isMockMode() &&
+              ' Сейчас включён демонстрационный режим: задания заготовлены заранее.'}
           </p>
         )}
 
@@ -291,13 +511,24 @@ function TeacherPage() {
           </label>
         </div>
 
+        {error && <p className="teacher-error">{error}</p>}
+
         <div className="teacher-actions">
-          <button type="submit" className="t-btn t-btn--primary">
-            Собрать работу
+          <button
+            type="submit"
+            className="t-btn t-btn--primary"
+            disabled={loading}
+          >
+            {loading
+              ? 'Генерирую черновик…'
+              : isBank
+                ? 'Собрать работу'
+                : 'Сгенерировать черновик'}
           </button>
           <span className="teacher-offline">
-            Генерация идёт на устройстве: работает без интернета, ответы
-            считаются формулами, а не берутся из сети.
+            {isBank
+              ? 'Генерация идёт на устройстве: работает без интернета, ответы считаются формулами, а не берутся из сети.'
+              : 'Ключ модели хранится на сервере Alma и не попадает в браузер.'}
           </span>
         </div>
       </form>

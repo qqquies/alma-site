@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Серверные настройки и служебные файлы (не публиковать).
+server/config.php
+server/storage/*.json
