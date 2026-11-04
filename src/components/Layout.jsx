@@ -4,13 +4,14 @@ import './Layout.css'
 const NAV_ITEMS = [
   { label: 'Главная', to: '/' },
   { label: 'Модули', to: '/modules' },
+  { label: 'Для учителя', to: '/teacher' },
   { label: 'О проекте', to: '/about' },
 ]
 
 function Layout({ children }) {
   return (
     <div className="layout">
-      <header className="header">
+      <header className="header no-print">
         <div className="container header-inner">
           <Link to="/" className="logo">
             Alma
@@ -31,7 +32,7 @@ function Layout({ children }) {
 
       <main className="main">{children}</main>
 
-      <footer className="footer">
+      <footer className="footer no-print">
         <div className="container">
           Школьный научно-практический проект · 2026
         </div>
