@@ -205,6 +205,11 @@ function TeacherPage() {
 
   const meta = buildMeta()
 
+  // Живая сводка справа от формы: учитель сразу видит,
+  // что именно уйдёт в печать.
+  const difficultyLabel =
+    DIFFICULTIES.find((item) => item.id === settings.difficultyId)?.label || '—'
+
   if (test) {
     const first = test.variants[0]
 
@@ -284,7 +289,7 @@ function TeacherPage() {
   }
 
   return (
-    <section>
+    <section className="teacher-page">
       <TeacherTabs />
       <h1 className="page-title">Для учителя</h1>
       <p className="teacher-intro">
@@ -534,6 +539,64 @@ function TeacherPage() {
           </span>
         </div>
       </form>
+
+      <aside className="teacher-aside no-print" aria-label="Состав работы">
+        <div className="teacher-aside-card">
+          <span className="teacher-aside-label">Что будет в работе</span>
+          <dl className="teacher-aside-list">
+            <div>
+              <dt>Предмет</dt>
+              <dd>{subjectTitle}</dd>
+            </div>
+            <div>
+              <dt>Тема</dt>
+              <dd>{topicTitle || 'укажите тему'}</dd>
+            </div>
+            <div>
+              <dt>Класс</dt>
+              <dd>{profile.grade || subject.grade || '—'}</dd>
+            </div>
+            <div>
+              <dt>Заданий</dt>
+              <dd>{settings.count}</dd>
+            </div>
+            <div>
+              <dt>Сложность</dt>
+              <dd>{difficultyLabel}</dd>
+            </div>
+            {isBank && (
+              <div>
+                <dt>Вариантов</dt>
+                <dd>{settings.variantCount === 2 ? 'два' : 'один'}</dd>
+              </div>
+            )}
+            <div>
+              <dt>Время</dt>
+              <dd>{settings.minutes} мин</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div className="teacher-aside-card">
+          <span className="teacher-aside-label">В комплекте</span>
+          <ul className="teacher-aside-checks">
+            <li>Лист с заданиями</li>
+            {settings.showKey && <li>Ключ ответов</li>}
+            {settings.showKey && settings.showSolutions && (
+              <li>Пояснения к заданиям</li>
+            )}
+            {settings.showAnswerForm && <li>Бланк ответов</li>}
+          </ul>
+        </div>
+
+        <div className="teacher-aside-card teacher-aside-card--hint">
+          <span className="teacher-aside-label">Памятка</span>
+          <p>
+            В диалоге печати выберите «Сохранить как PDF». Ключ и пояснения
+            идут отдельными листами — их можно не раздавать ученикам.
+          </p>
+        </div>
+      </aside>
     </section>
   )
 }

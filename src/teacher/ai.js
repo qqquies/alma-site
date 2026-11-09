@@ -1,10 +1,16 @@
 import { LEVELS } from './buildTest'
-import { mockDraft, mockPresentation } from './mockAI'
 
 // Клиент серверного посредника. Ключ модели живёт ТОЛЬКО на сервере:
 // в браузер он не попадает никогда.
 const ENDPOINT = import.meta.env.VITE_AI_ENDPOINT || '/api/generate.php'
 const MOCK = import.meta.env.VITE_AI_MOCK === '1'
+
+// Заготовки для локальной проверки интерфейса подгружаются отдельным
+// модулем и только при VITE_AI_MOCK=1. В обычной сборке эта ветка
+// вырезается, поэтому демонстрационные задания не попадают в бандл.
+async function loadMock() {
+  return import('./mockAI')
+}
 
 export function isMockMode() {
   return MOCK
@@ -66,7 +72,10 @@ function normalize(payload) {
 }
 
 export async function generateDraft(params) {
-  if (MOCK) return mockDraft(params)
+  if (MOCK) {
+    const { mockDraft } = await loadMock()
+    return mockDraft(params)
+  }
 
   let response
 
@@ -136,7 +145,10 @@ function normalizePresentation(payload) {
 }
 
 export async function generatePresentation(params) {
-  if (MOCK) return mockPresentation(params)
+  if (MOCK) {
+    const { mockPresentation } = await loadMock()
+    return mockPresentation(params)
+  }
 
   let response
 

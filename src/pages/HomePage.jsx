@@ -1,56 +1,250 @@
 import { Link } from 'react-router-dom'
+import Reveal from '../components/Reveal'
+import { HeroArt, StudentArt, TeacherArt } from '../components/Illustrations'
 import './HomePage.css'
+
+const FEATURES = [
+  {
+    number: '01',
+    title: 'Уроки, которые можно потрогать',
+    text: 'Световые часы, поезд и мяч: интерактивные модели показывают то, что сложно представить в голове.',
+  },
+  {
+    number: '02',
+    title: 'Проверка без подглядывания',
+    text: 'Во время квиза материал скрыт. Задания идут от простого к сложному, а ответы считаются по формулам.',
+  },
+  {
+    number: '03',
+    title: 'Оценка и пересдача',
+    text: 'Итоговая работа оценивается по школьной шкале 2–5. Можно разобрать ошибки и пройти её заново.',
+  },
+  {
+    number: '04',
+    title: 'Печать и презентации',
+    text: 'Работы собираются в два варианта и печатаются на A4. Презентация скачивается как редактируемый .pptx.',
+  },
+]
+
+const STUDENT_POINTS = [
+  'Семь уроков по теории относительности',
+  'Три интерактивные модели',
+  'Прогресс сохраняется в браузере',
+]
+
+const TEACHER_POINTS = [
+  'Печать A4 и сохранение в PDF',
+  'Физика, алгебра, русский язык',
+  'Презентации в редактируемом .pptx',
+]
 
 function HomePage() {
   return (
-    <>
+    <div className="home">
       <section className="hero">
-        <h1>Сложные идеи науки — понятно.</h1>
-        <p className="hero-sub">
-          Alma — виртуальное пространство получения образования для тех,
-          кому мало школьной программы.
+        <Reveal className="hero-copy">
+          <span className="kicker">Цифровой школьный помощник</span>
+          <h1 className="hero-title">
+            Понять самому.
+            <br />
+            Объяснить другим.
+          </h1>
+          <p className="hero-lead">
+            Alma помогает ученикам разбираться в сложных темах, а учителям —
+            быстрее готовить проверочные и презентации. Без лишнего шума
+            и без зубрёжки.
+          </p>
+
+          <div className="hero-actions">
+            <Link to="/modules" className="btn btn--primary">
+              Начать с уроков
+              <span className="btn__arrow" aria-hidden="true">
+                →
+              </span>
+            </Link>
+            <Link to="/teacher" className="btn btn--ghost">
+              Открыть учительскую
+            </Link>
+          </div>
+
+          <ul className="hero-meta">
+            <li>Бесплатно</li>
+            <li>Без регистрации</li>
+            <li>Работает в браузере</li>
+          </ul>
+        </Reveal>
+
+        <Reveal className="hero-art-wrap" delay={120}>
+          <HeroArt />
+        </Reveal>
+      </section>
+
+      <Reveal as="section" className="audience" id="audience">
+        <div className="section-head">
+          <span className="kicker">Два входа</span>
+          <h2 className="section-title">
+            Ученику — разобраться. Учителю — подготовиться.
+          </h2>
+          <p className="section-lead">
+            Один сайт, но два разных сценария. Выберите свой — или загляните
+            в оба.
+          </p>
+        </div>
+
+        <div className="audience-grid">
+          <article className="audience-card">
+            <div className="audience-art">
+              <StudentArt />
+            </div>
+            <span className="audience-label">01 · Ученик</span>
+            <h3>Разобраться в теме без спешки</h3>
+            <p>
+              Интерактивные уроки, где формулу можно увидеть, а не только
+              прочитать. После каждого урока — короткая проверка, в конце
+              модуля — итоговая работа с оценкой.
+            </p>
+            <ul className="check-list">
+              {STUDENT_POINTS.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
+            <Link to="/modules" className="card-link">
+              Перейти к урокам
+              <span aria-hidden="true">→</span>
+            </Link>
+          </article>
+
+          <article className="audience-card audience-card--teacher">
+            <span className="audience-flag">Готовые материалы</span>
+            <div className="audience-art">
+              <TeacherArt />
+            </div>
+            <span className="audience-label">02 · Учитель</span>
+            <h3>Подготовить работу за вечер</h3>
+            <p>
+              Банк заданий по физике и генерация черновиков по любому
+              предмету. Два варианта, бланк, ключ и пояснения — всё готово
+              к печати.
+            </p>
+            <ul className="check-list">
+              {TEACHER_POINTS.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
+            <Link to="/teacher" className="card-link card-link--strong">
+              Открыть учительскую
+              <span aria-hidden="true">→</span>
+            </Link>
+          </article>
+        </div>
+      </Reveal>
+
+      <Reveal as="section" className="features">
+        <div className="section-head">
+          <span className="kicker">Что внутри</span>
+          <h2 className="section-title">
+            Не обещания, а работающие инструменты
+          </h2>
+        </div>
+
+        <div className="feature-grid">
+          {FEATURES.map((feature) => (
+            <article className="feature-card" key={feature.number}>
+              <span className="feature-number">{feature.number}</span>
+              <h3>{feature.title}</h3>
+              <p>{feature.text}</p>
+            </article>
+          ))}
+        </div>
+      </Reveal>
+
+      <Reveal as="section" className="ai-note">
+        <div className="ai-note-copy">
+          <span className="kicker">Про ИИ честно</span>
+          <h2 className="section-title">
+            ИИ готовит черновик. Решает учитель.
+          </h2>
+          <p>
+            Модель предлагает формулировки заданий или структуру слайдов,
+            но не ставит оценки и не заменяет методиста. Учитель проверяет
+            каждый вопрос, ответ и факт перед уроком.
+          </p>
+          <p className="ai-note-small">
+            Сейчас уроки, банк физики и печать работают без ИИ. Генерация
+            по другим предметам подключается отдельно: ключ модели хранится
+            на сервере Alma, а не в браузере.
+          </p>
+        </div>
+
+        <div className="ai-columns">
+          <div className="ai-column">
+            <h3>ИИ берёт на себя</h3>
+            <ul>
+              <li>Черновики заданий по любому предмету</li>
+              <li>Структуру презентации</li>
+              <li>Рутину, на которую уходит вечер</li>
+            </ul>
+          </div>
+          <div className="ai-column ai-column--human">
+            <h3>Остаётся человеку</h3>
+            <ul>
+              <li>Проверку фактов и ответов</li>
+              <li>Сложность и объём работы</li>
+              <li>Решение об оценке</li>
+            </ul>
+          </div>
+        </div>
+      </Reveal>
+
+      <Reveal as="section" className="module-preview">
+        <div className="module-preview-number" aria-hidden="true">
+          01
+        </div>
+        <div className="module-preview-copy">
+          <span className="kicker">Первый модуль</span>
+          <h2 className="section-title">
+            Специальная теория относительности
+          </h2>
+          <p>
+            Семь уроков о том, как Эйнштейн перевернул представления
+            о времени и пространстве. С моделями, проверками и итоговой
+            работой.
+          </p>
+          <ul className="module-meta">
+            <li>7 уроков</li>
+            <li>3 интерактивные модели</li>
+            <li>Итоговая работа</li>
+          </ul>
+          <Link to="/modules/relativity" className="btn btn--ghost">
+            Открыть модуль
+            <span className="btn__arrow" aria-hidden="true">
+              →
+            </span>
+          </Link>
+        </div>
+      </Reveal>
+
+      <Reveal as="section" className="closing">
+        <h2>Начните с одной темы.</h2>
+        <p>
+          Не нужно регистрироваться и что-то устанавливать. Откройте первый
+          урок или соберите первую работу.
         </p>
-        <Link to="/modules" className="hero-cta">
-          Перейти к модулям
-        </Link>
-      </section>
+        <div className="closing-actions">
+          <Link to="/modules" className="btn btn--primary">
+            Я ученик
+            <span className="btn__arrow" aria-hidden="true">
+              →
+            </span>
+          </Link>
+          <Link to="/teacher" className="btn btn--ghost">
+            Я учитель
+          </Link>
+        </div>
+      </Reveal>
 
-      <section className="info">
-        <article className="info-card">
-          <h3>Что такое Alma?</h3>
-          <p>
-            <span className="text-accent">Alma</span> — это интерактивная
-            образовательная среда, где сложные идеи современной науки можно
-            изучать самостоятельно: через объяснения, визуализации и
-            небольшие эксперименты.
-          </p>
-        </article>
-
-        <article className="info-card">
-          <h3>Зачем это нужно?</h3>
-          <p>
-            Школьная программа даёт фундамент, но далеко не всегда оставляет
-            время на темы, которые находятся за её пределами. Alma создана
-            для тех, кому хочется разобраться глубже: не просто запомнить
-            формулу, а понять,{' '}
-            <span className="text-accent">почему всё устроено именно так</span>.
-          </p>
-        </article>
-
-        <article className="info-card">
-          <h3>Для кого?</h3>
-          <p>
-            Для школьников, которым интересно заглянуть за пределы привычного
-            курса математики и физики. Предварительные знания важны, но
-            гораздо важнее <span className="text-accent">любопытство</span>:
-            материал начинается с интуитивного объяснения и постепенно
-            приводит к более строгому пониманию.
-          </p>
-        </article>
-      </section>
-
-      <p className="motto">Не просто узнать. Понять.</p>
-    </>
+      <p className="home-motto">Не просто узнать. Понять.</p>
+    </div>
   )
 }
 

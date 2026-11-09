@@ -1,0 +1,44 @@
+/* Общие настройки линейных иллюстраций */
+
+.art {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.art--hero {
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.art--card {
+  max-width: 220px;
+}
+
+.art-surface {
+  fill: var(--color-surface);
+}
+
+.art-accent-fill {
+  fill: var(--color-accent);
+}
+
+.art-accent-stroke {
+  stroke: var(--color-accent);
+}
+
+.art-ink {
+  stroke: currentColor;
+}
+
+.art-dim {
+  stroke: currentColor;
+  opacity: 0.32;
+}
+
+@media (max-width: 720px) {
+  .art--hero {
+    max-width: 380px;
+  }
+}

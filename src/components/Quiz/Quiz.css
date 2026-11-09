@@ -9,7 +9,7 @@
 
 .quiz-start {
   background: var(--color-surface);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: 22px;
 }
@@ -29,7 +29,7 @@
 
 .quiz-card {
   background: var(--color-surface);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: 18px;
   margin-bottom: 14px;
@@ -52,7 +52,7 @@
   text-align: left;
   background: var(--color-bg-soft);
   color: var(--color-text);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 10px 14px;
   transition: border-color 0.15s, background 0.15s;

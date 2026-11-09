@@ -6,10 +6,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Alma — интерактивная образовательная среда для школьников: сложные идеи физики и математики через объяснения, визуализации и небольшие эксперименты."
+      content="Alma — цифровой школьный помощник для учеников и учителей: интерактивные уроки, проверочные работы, печать A4 и презентации в PPTX."
     />
-    <meta name="theme-color" content="#171a1d" />
-    <title>Alma — сложные идеи науки понятно</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Alma — цифровой школьный помощник" />
+    <meta
+      property="og:description"
+      content="Понятные уроки для учеников и готовые материалы для учителей. Без регистрации."
+    />
+    <meta name="theme-color" content="#f7f5ef" />
+    <title>Alma — цифровой школьный помощник</title>
+    <script>
+      // Ставим тему до первой отрисовки, чтобы страница не мигала.
+      ;(function () {
+        try {
+          var saved = localStorage.getItem('alma-theme')
+          var theme =
+            saved === 'light' || saved === 'dark'
+              ? saved
+              : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+          document.documentElement.dataset.theme = theme
+          var meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) {
+            meta.setAttribute('content', theme === 'light' ? '#f7f5ef' : '#171a1d')
+          }
+        } catch (error) {
+          // Приватный режим может запрещать localStorage — оставляем тему по умолчанию.
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

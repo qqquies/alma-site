@@ -104,7 +104,7 @@
   display: grid;
   place-items: center;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--color-border);
   border-radius: 7px;
   color: var(--color-text-dim);
   font: inherit;
@@ -126,7 +126,7 @@
   width: 100%;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid var(--color-border-strong);
   color: var(--color-text);
   padding: 4px 2px 8px;
   font: inherit;

@@ -10,8 +10,9 @@ import moduleExamQuiz from './quiz/moduleExamQuiz'
 const relativityModule = {
   id: 'relativity',
   title: 'Специальная теория относительности',
-  description: 'Первый интерактивный модуль сайта.',
-  status: 'in-progress',
+  description:
+    'Семь уроков о времени, пространстве и скорости света — с интерактивными моделями, короткими проверками и итоговой работой.',
+  status: 'ready',
   lessons: [
     { id: 'classical-crisis', title: 'Почему классическая картина мира перестала работать' },
     { id: 'reference-frames', title: 'Системы отсчёта' },
