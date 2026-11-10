@@ -20,9 +20,14 @@
 const DEFAULT_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast'
 
 // Сайты, которым разрешено обращаться к генератору из браузера.
+// HTTP-адреса домена оставлены как временный запасной вариант: пока GitHub
+// Pages не выпустил сертификат для alma-edu.ru, сайт открывается по http.
+// После включения HTTPS эти две строки можно убрать.
 const ALLOWED_ORIGINS = new Set([
   'https://alma-edu.ru',
   'https://www.alma-edu.ru',
+  'http://alma-edu.ru',
+  'http://www.alma-edu.ru',
   'https://qqquies.github.io',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
@@ -87,12 +92,53 @@ export async function handleRequest(request, env) {
   try {
     checkRate(request)
     const input = await readInput(request)
-    const messages =
+    let messages =
       input.kind === 'presentation'
         ? buildPresentationPrompt(input)
         : buildTestPrompt(input)
-    const answer = await callModel(env, messages, input.count)
-    const data = decodePayload(answer)
+
+    // Модель иногда отвечает обрезанным JSON или добавляет лишний текст.
+    // Одна повторная попытка заметно снижает число неудач на защите.
+    // Общий бюджет — минута: фронтенд ждёт 75 секунд.
+    const startedAt = Date.now()
+    let data = null
+    let lastError = null
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const remaining = 60000 - (Date.now() - startedAt)
+
+      if (remaining < 12000) break
+
+      const answer = await callModel(env, messages, input.count, remaining)
+
+      try {
+        data = decodePayload(answer)
+        break
+      } catch (error) {
+        lastError = error
+
+        if (!(error instanceof HttpError) || error.status !== 502) {
+          throw error
+        }
+
+        messages = [
+          ...messages,
+          {
+            role: 'user',
+            content:
+              'ВАЖНО: предыдущий ответ не разобрался как JSON. Верни только корректный JSON-объект по схеме, без markdown, без пояснений и без обрыва на середине.',
+          },
+        ]
+      }
+    }
+
+    if (!data) {
+      throw (
+        lastError ||
+        new HttpError(502, 'Модель не успела ответить. Попробуйте ещё раз.')
+      )
+    }
+
     const payload =
       input.kind === 'presentation'
         ? { slides: parseSlides(data) }
@@ -259,10 +305,10 @@ function buildTestPrompt({ subject, grade, topic, count, difficulty }) {
 4. level — только "basic", "advanced" или "high" (1, 2 и 3 балла).
 5. Формулировки — на русском языке, без нумерации, без HTML и без подсказок вроде «правильный ответ».
 6. explanation — одно-два предложения: почему верный ответ верен.
-7. Перед ответом обязательно проверь арифметику: подставь выбранный вариант обратно в условие и убедись, что равенство сходится. Если не сходится — исправь correctIndex или переформулируй задание.
-8. В explanation покажи проверку: «Подставляем x = 3: 2·3 + 5 = 11, верно».
+7. Перед ответом обязательно проверь арифметику: подставь выбранный вариант обратно в условие и убедись, что равенство сходится. Верный ответ обязан быть среди четырёх вариантов. Если ответ не входит в варианты — переформулируй задание, а не оставляй уравнение без верного варианта.
+8. В explanation покажи проверку: «Подставляем x = 3: 2·3 + 5 = 11, верно». В explanation не должно быть фраз «не подходит», «не является вариантом», «неверно»: если проверка не сошлась, переделай всё задание.
 9. Если ответ нельзя проверить однозначно или ты не уверен в факте — поставь "check": "mismatch". Не выдумывай факты, даты и формулы.
-10. Задания должны соответствовать указанному классу и быть посильными без калькулятора, если это не оговорено темой.
+10. Задания должны соответствовать указанному классу и быть посильными без калькулятора, если это не оговорено темой. Ответы по возможности целые.
 11. Не повторяй одно и то же задание с другими числами.
 12. Никаких заданий с несколькими верными ответами или с ответом «все перечисленное».`
 
@@ -320,11 +366,11 @@ function buildPresentationPrompt({ subject, grade, topic, count }) {
   ]
 }
 
-async function callModel(env, messages, count) {
-  const maxTokens = Math.min(4000, 500 + count * 220)
+async function callModel(env, messages, count, timeoutMs = MODEL_TIMEOUT_MS) {
+  const maxTokens = Math.min(4000, 600 + count * 260)
 
   if (env.OPENROUTER_API_KEY) {
-    return callOpenRouter(env, messages, maxTokens)
+    return callOpenRouter(env, messages, maxTokens, timeoutMs)
   }
 
   if (!env.AI || typeof env.AI.run !== 'function') {
@@ -341,7 +387,7 @@ async function callModel(env, messages, count) {
       temperature: 0.35,
       max_tokens: maxTokens,
     }),
-    MODEL_TIMEOUT_MS,
+    Math.max(12000, timeoutMs),
   )
 
   const text = extractText(result)
@@ -353,7 +399,7 @@ async function callModel(env, messages, count) {
   return text
 }
 
-async function callOpenRouter(env, messages, maxTokens) {
+async function callOpenRouter(env, messages, maxTokens, timeoutMs = MODEL_TIMEOUT_MS) {
   const model = env.OPENROUTER_MODEL
 
   if (!model) {
@@ -364,7 +410,7 @@ async function callOpenRouter(env, messages, maxTokens) {
   }
 
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS)
+  const timer = setTimeout(() => controller.abort(), Math.max(12000, timeoutMs))
 
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -480,6 +526,31 @@ function decodePayload(content) {
   }
 }
 
+function valueFromExplanation(explanation, options) {
+  const match = /x\s*=\s*(-?\d+(?:[.,]\d+)?)/i.exec(explanation)
+
+  if (!match) return null
+
+  const value = Number(match[1].replace(',', '.'))
+
+  if (!Number.isFinite(value)) return null
+
+  const matches = options
+    .map((option, index) => {
+      const number = /-?\d+(?:[.,]\d+)?/.exec(String(option))
+      if (!number) return null
+
+      const parsed = Number(number[0].replace(',', '.'))
+
+      return Number.isFinite(parsed) && Math.abs(parsed - value) < 1e-9
+        ? index
+        : null
+    })
+    .filter((index) => index !== null)
+
+  return matches.length === 1 ? matches[0] : null
+}
+
 function parseItems(data) {
   if (!Array.isArray(data?.items)) {
     throw new HttpError(
@@ -515,7 +586,27 @@ function parseItems(data) {
 
     const level = levels.includes(raw.level) ? raw.level : 'basic'
     const explanation = clean(raw.explanation, 600)
-    const check = raw.check === 'mismatch' ? 'mismatch' : 'ok'
+    let check = raw.check === 'mismatch' ? 'mismatch' : 'ok'
+
+    // Если модель сама пишет, что верного варианта нет, задание не печатаем.
+    if (
+      /не является вариантом|нет правильного ответа|ни один (?:из )?вариант|правильный ответ не/i.test(
+        explanation,
+      )
+    ) {
+      continue
+    }
+
+    // Дополнительная самопроверка: если в объяснении написано «x = 10»,
+    // а выбранный вариант — «8», доверяем объяснению и помечаем задание
+    // для учителя. Объяснение тоже может ошибаться, поэтому check остаётся
+    // mismatch: автоматической оценки нет.
+    const explained = valueFromExplanation(explanation, options)
+
+    if (explained !== null && explained !== correct) {
+      correct = explained
+      check = 'mismatch'
+    }
 
     items.push({
       text,

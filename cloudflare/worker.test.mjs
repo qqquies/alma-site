@@ -74,6 +74,20 @@ test('OPTIONS returns CORS headers for an allowed origin', async () => {
   )
 })
 
+test('the HTTP domain is allowed while the certificate is pending', async () => {
+  const request = new Request('https://alma-ai.example.workers.dev/', {
+    method: 'OPTIONS',
+    headers: { Origin: 'http://alma-edu.ru' },
+  })
+  const response = await worker.fetch(request, {})
+
+  assert.equal(response.status, 204)
+  assert.equal(
+    response.headers.get('Access-Control-Allow-Origin'),
+    'http://alma-edu.ru',
+  )
+})
+
 test('a foreign origin is rejected', async () => {
   const { response, data } = await call(
     post(
@@ -151,6 +165,63 @@ test('items with the wrong number of options are dropped', async () => {
   assert.equal(response.status, 200)
   assert.equal(data.items.length, 1)
   assert.equal(data.items[0].text, 'Хорошее задание')
+})
+
+test('an explanation that contradicts the chosen option is flagged', async () => {
+  const { response, data } = await call(
+    post({ subject: 'Алгебра', topic: 'Уравнения', count: 2 }),
+    envWith(
+      draft([
+        {
+          text: 'Найдите x в уравнении x - 3 = 7',
+          options: ['5', '8', '10', '12'],
+          correctIndex: 1,
+          explanation: 'Подставляем x = 10: 10 - 3 = 7, верно',
+          level: 'basic',
+        },
+        {
+          text: 'Решите уравнение 2x + 5 = 11',
+          options: ['2', '3', '4', '5'],
+          correctIndex: 1,
+          explanation: 'Подставляем x = 3: 2·3 + 5 = 11, верно',
+          level: 'basic',
+        },
+      ]),
+    ),
+  )
+
+  assert.equal(response.status, 200)
+  assert.equal(data.items[0].correctIndex, 2)
+  assert.equal(data.items[0].check, 'mismatch')
+  assert.equal(data.items[1].check, 'ok')
+})
+
+test('an item that admits there is no valid option is dropped', async () => {
+  const { response, data } = await call(
+    post({ subject: 'Алгебра', topic: 'Уравнения', count: 2 }),
+    envWith(
+      draft([
+        {
+          text: 'Решите уравнение 2x + 3 = 5x - 2',
+          options: ['1', '2', '3', '4'],
+          correctIndex: 0,
+          explanation: 'x = 5/3 не является вариантом, правильный ответ не подходит.',
+          level: 'basic',
+        },
+        {
+          text: 'Решите уравнение 2x + 5 = 11',
+          options: ['2', '3', '4', '5'],
+          correctIndex: 1,
+          explanation: 'Подставляем x = 3: 2·3 + 5 = 11, верно',
+          level: 'basic',
+        },
+      ]),
+    ),
+  )
+
+  assert.equal(response.status, 200)
+  assert.equal(data.items.length, 1)
+  assert.equal(data.items[0].text, 'Решите уравнение 2x + 5 = 11')
 })
 
 test('a draft with no valid items returns 502', async () => {
@@ -238,6 +309,41 @@ test('markdown fences and prose around JSON are tolerated', async () => {
   )
 
   assert.equal(response.status, 200)
+  assert.equal(data.items.length, 1)
+})
+
+test('a malformed first response is retried once', async () => {
+  let calls = 0
+  const env = {
+    AI: {
+      async run() {
+        calls += 1
+
+        if (calls === 1) {
+          return { response: 'Извините, не могу ответить.' }
+        }
+
+        return {
+          response: draft([
+            {
+              text: 'Задание',
+              options: ['1', '2', '3', '4'],
+              correctIndex: 0,
+              level: 'basic',
+            },
+          ]),
+        }
+      },
+    },
+  }
+
+  const { response, data } = await call(
+    post({ subject: 'Алгебра', topic: 'Корни', count: 1 }),
+    env,
+  )
+
+  assert.equal(response.status, 200)
+  assert.equal(calls, 2)
   assert.equal(data.items.length, 1)
 })
 
