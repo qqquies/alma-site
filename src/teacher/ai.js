@@ -1,9 +1,13 @@
 import { LEVELS } from './buildTest'
 
-// Клиент серверного посредника. Ключ модели живёт ТОЛЬКО на сервере:
+// Клиент серверного посредника. Доступ к модели живёт ТОЛЬКО на сервере:
 // в браузер он не попадает никогда.
 const ENDPOINT = import.meta.env.VITE_AI_ENDPOINT || '/api/generate.php'
 const MOCK = import.meta.env.VITE_AI_MOCK === '1'
+
+// Модель может думать дольше, чем обычный запрос. Даём ей минуту
+// с небольшим запасом, но не держим ученика у бесконечного спиннера.
+const REQUEST_TIMEOUT = 75000
 
 // Заготовки для локальной проверки интерфейса подгружаются отдельным
 // модулем и только при VITE_AI_MOCK=1. В обычной сборке эта ветка
@@ -71,11 +75,11 @@ function normalize(payload) {
   return { items, warnings }
 }
 
-export async function generateDraft(params) {
-  if (MOCK) {
-    const { mockDraft } = await loadMock()
-    return mockDraft(params)
-  }
+// Один общий запрос к генератору: таймаут, понятные ошибки и разбор ответа.
+// Так и задания, и презентации ведут себя одинаково.
+async function postToAI(body, fallbackMessage) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
 
   let response
 
@@ -83,24 +87,55 @@ export async function generateDraft(params) {
     response = await fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
+      body: JSON.stringify(body),
+      signal: controller.signal,
     })
-  } catch {
-    throw new Error(
-      'Сервер генерации недоступен. Проверьте интернет или соберите работу из банка Alma.',
-    )
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error(
+        'Генерация заняла больше минуты. Попробуйте ещё раз или соберите работу из банка Alma.',
+      )
+    }
+
+    throw new Error(fallbackMessage)
+  } finally {
+    clearTimeout(timer)
   }
 
   const data = await response.json().catch(() => null)
 
-  if (!response.ok || !data) {
+  if (response.status === 404) {
     throw new Error(
-      data?.error ||
-        'Сервер не смог собрать черновик. Попробуйте позже или используйте банк Alma.',
+      'ИИ-генератор не подключён к этой сборке. Соберите работу из банка Alma.',
     )
   }
 
+  if (response.status === 429) {
+    throw new Error(
+      data?.error ||
+        'Лимит генераций исчерпан. Попробуйте позже или соберите работу из банка Alma.',
+    )
+  }
+
+  if (!response.ok || !data) {
+    throw new Error(data?.error || fallbackMessage)
+  }
+
   if (data.error) throw new Error(data.error)
+
+  return data
+}
+
+export async function generateDraft(params) {
+  if (MOCK) {
+    const { mockDraft } = await loadMock()
+    return mockDraft(params)
+  }
+
+  const data = await postToAI(
+    params,
+    'Сервер генерации недоступен. Проверьте интернет или соберите работу из банка Alma.',
+  )
 
   const result = normalize(data)
   if (result.items.length === 0) {
@@ -150,30 +185,10 @@ export async function generatePresentation(params) {
     return mockPresentation(params)
   }
 
-  let response
-
-  try {
-    response = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...params, kind: 'presentation' }),
-    })
-  } catch {
-    throw new Error(
-      'Сервер генерации недоступен. Проверьте интернет и попробуйте ещё раз.',
-    )
-  }
-
-  const data = await response.json().catch(() => null)
-
-  if (!response.ok || !data) {
-    throw new Error(
-      data?.error ||
-        'Сервер не смог собрать презентацию. Попробуйте позже.',
-    )
-  }
-
-  if (data.error) throw new Error(data.error)
+  const data = await postToAI(
+    { ...params, kind: 'presentation' },
+    'Сервер не смог собрать презентацию. Попробуйте позже.',
+  )
 
   const result = normalizePresentation(data)
   if (result.slides.length === 0) {

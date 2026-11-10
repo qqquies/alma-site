@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:worker": "node --test cloudflare/worker.test.mjs",
+    "deploy:worker": "npx --yes wrangler@latest deploy --config cloudflare/wrangler.toml",
+    "deploy:pages": "cd cloudflare/pages && npx --yes wrangler@latest pages deploy public --project-name alma-ai --branch main --commit-dirty=true"
   },
   "dependencies": {
     "pptxgenjs": "^4.0.1",

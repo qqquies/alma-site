@@ -1,0 +1,17 @@
+name = "alma-ai"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+# Бесплатный Workers AI. В панели Cloudflare этот binding называется
+# Workers AI, а переменная должна называться AI — код ищет env.AI.
+[ai]
+binding = "AI"
+
+# Модель можно поменять без правки кода.
+# [vars]
+# AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+#
+# Если позже появится ключ OpenRouter, добавьте секреты:
+#   npx wrangler secret put OPENROUTER_API_KEY
+#   npx wrangler secret put OPENROUTER_MODEL
+# и Worker начнёт использовать OpenRouter вместо Workers AI.

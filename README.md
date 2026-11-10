@@ -24,18 +24,21 @@
 - [React Router](https://reactrouter.com) — навигация
 - Canvas 2D — интерактивные симуляции
 - Банк заданий — работает офлайн, ответы считаются формулами
-- ИИ-черновики — через серверный прокси на PHP (`server/`), ключ модели
-  не попадает в браузер
+- ИИ-черновики — через Cloudflare Pages Functions + Workers AI
+  (`cloudflare/`), ключ модели не попадает в браузер. PHP-вариант
+  (`server/`) остаётся запасным для хостинга с PHP.
 - [pptxgenjs](https://gitbrent.github.io/PptxGenJS/) — редактируемые
   презентации `.pptx`
 
 ## Команды
 
 ```bash
-npm install    # установить зависимости
-npm run dev    # сервер разработки → http://localhost:5173
-npm run build  # production-сборка в папку dist
-npm run lint   # проверка кода
+npm install       # установить зависимости
+npm run dev       # сервер разработки → http://localhost:5173
+npm run build     # production-сборка в папку dist
+npm run lint      # проверка кода
+npm run test:worker  # тесты серверной части ИИ
+npm run deploy:pages # обновить ИИ на Cloudflare Pages
 ```
 
 ## Раздел для учителя
@@ -48,12 +51,17 @@ npm run lint   # проверка кода
 структуру слайдов, учитель правит текст в браузере и скачивает редактируемый
 `.pptx` (собирается локально через `pptxgenjs`).
 
-Серверная часть описана в [`server/README.md`](server/README.md). Для сборки
-с реальным ИИ задайте адрес прокси в `.env.local`:
+Серверная часть описана в [`cloudflare/README.md`](cloudflare/README.md).
+Основной адрес — Cloudflare Pages Functions + Workers AI: отдельный ключ
+не нужен, бесплатный дневной запас. Адрес задаётся в `.env.production`:
 
 ```bash
-VITE_AI_ENDPOINT=https://ваш-домен/api/generate.php
+VITE_AI_ENDPOINT=https://alma-ai-73x.pages.dev/api/generate
 ```
+
+Дополнительно в `cloudflare/` лежит вариант Worker. Он может пригодиться,
+если `workers.dev` доступен из вашей сети. Если позже понадобится хостинг
+с PHP, остаётся вариант из [`server/README.md`](server/README.md).
 
 ## Структура
 
@@ -70,7 +78,8 @@ src/
 ├── teacher/      # банк заданий, сборка вариантов, клиент ИИ, печать
 └── lib/          # вспомогательные утилиты (цикл анимации)
 
-server/           # PHP-прокси к модели (загружается отдельно на хостинг)
+server/           # PHP-прокси к модели (запасной вариант, загружается отдельно)
+cloudflare/       # ИИ на Cloudflare: Pages Functions + Workers AI
 ```
 
 Новый модуль добавляется созданием папки в `src/modules/` и одной строки в

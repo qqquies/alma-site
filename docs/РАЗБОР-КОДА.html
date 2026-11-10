@@ -1,0 +1,1255 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alma — разбор кода для себя</title>
+    <link rel="stylesheet" href="jury-print.css" />
+    <style>
+      .simple {
+        border: 1px solid #999;
+        background: #f7f7f7;
+        padding: 10px 12px;
+        margin: 12px 0;
+      }
+
+      .simple p:last-child {
+        margin-bottom: 0;
+      }
+
+      .say {
+        border-left: 3px solid #777;
+        padding-left: 12px;
+        margin: 10px 0;
+        font-style: italic;
+      }
+
+      .chapter {
+        border-top: 1px solid #999;
+        padding-top: 16px;
+        margin-top: 26px;
+      }
+
+      .chapter h2 {
+        margin-top: 0;
+      }
+
+      .small {
+        font-size: 14px;
+        color: #444;
+      }
+
+      .formula {
+        font-family: "Courier New", monospace;
+        background: #f2f2f2;
+        padding: 6px 9px;
+        margin: 10px 0;
+        border: 1px solid #d0d0d0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="doc-actions">
+      <button class="print-button" type="button" onclick="window.print()">Печать</button>
+    </div>
+
+    <h1>Разбор кода Alma</h1>
+    <h2>для себя, простыми словами</h2>
+
+    <p>
+      Это не отчёт для жюри. Это моя шпаргалка. Я разбираю свой же код так, как
+      рассказывал бы другу: без умных слов, где можно — с аналогиями. Если какой-то
+      кусок кажется сложным, начни с раздела 0. Там базовый синтаксис, который
+      встречается в проекте.
+    </p>
+
+    <p>
+      Главная мысль: мне не нужно помнить каждую строку. Достаточно понимать, зачем
+      существует файл и что делает главная функция. Остальное можно открыть и прочитать.
+    </p>
+
+    <div class="chapter">
+      <h2>0. Синтаксис, который встречается</h2>
+
+      <p>
+        Если ты не учил JavaScript глубоко — это нормально. Вот минимальный набор,
+        чтобы читать код проекта.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Запись</th>
+            <th>Что значит</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>const x = 5</code></td><td>Переменная, которую я не собираюсь переназначать.</td></tr>
+          <tr><td><code>let x = 5</code></td><td>Переменная, которую буду менять.</td></tr>
+          <tr><td><code>function f(a) { ... }</code></td><td>Обычная функция.</td></tr>
+          <tr><td><code>const f = (a) =&gt; a * 2</code></td><td>То же самое, короткая запись.</td></tr>
+          <tr><td><code>if (x &gt; 0) { ... }</code></td><td>Условие.</td></tr>
+          <tr><td><code>list.map(x =&gt; x * 2)</code></td><td>Преобразовать каждый элемент.</td></tr>
+          <tr><td><code>list.filter(x =&gt; x &gt; 0)</code></td><td>Оставить только подходящие.</td></tr>
+          <tr><td><code>list.reduce((sum, x) =&gt; sum + x, 0)</code></td><td>Свернуть список в одно число.</td></tr>
+          <tr><td><code>new Set(list)</code></td><td>Список без повторов.</td></tr>
+          <tr><td><code>Math.floor(3.9)</code></td><td>Округлить вниз, будет 3.</td></tr>
+          <tr><td><code>Math.ceil(3.1)</code></td><td>Округлить вверх, будет 4.</td></tr>
+          <tr><td><code>x % 2</code></td><td>Остаток от деления. Если 0 — число чётное.</td></tr>
+          <tr><td><code>...list</code></td><td>«Развернуть» список в отдельные элементы.</td></tr>
+          <tr><td><code>async / await</code></td><td>Ждать ответа, например от сервера.</td></tr>
+        </tbody>
+      </table>
+
+      <p>
+        Ещё в React есть две вещи, которые встречаются постоянно:
+        <code>useState</code> и <code>useEffect</code>. Первая — это переменная,
+        при изменении которой страница перерисовывается. Вторая — код, который
+        выполняется после отрисовки. Всё, больше для чтения проекта знать не обязательно.
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>1. Почему в адресе есть решётка</h2>
+
+      <p>
+        Сайт лежит на GitHub Pages. Это обычный статический хостинг: он отдаёт файлы,
+        но не умеет, как сервер, перенаправлять любой адрес на <code>index.html</code>.
+        Если открыть <code>/modules/relativity</code> и нажать F5, GitHub попробует
+        найти такую папку и вернёт 404.
+      </p>
+
+      <p>
+        Решение — <code>HashRouter</code>. Всё, что стоит после <code>#</code>,
+        браузер не отправляет на сервер. Сервер всегда получает только
+        <code>index.html</code>, а маршрут разбирает React уже внутри страницы.
+      </p>
+
+      <div class="simple">
+        <p>
+          <strong>Аналогия.</strong> Представь одну книгу. Сервер выдаёт тебе книгу
+          целиком, а <code>#</code> — это закладка: «открой страницу 4». Серверу
+          не важно, какая закладка, он всё равно даёт ту же книгу.
+        </p>
+      </div>
+
+      <p><strong>Код.</strong> <code>src/main.jsx</code>:</p>
+
+      <pre><code>import { HashRouter } from 'react-router-dom'
+
+createRoot(document.getElementById('root')).render(
+  &lt;StrictMode&gt;
+    &lt;HashRouter&gt;
+      &lt;App /&gt;
+    &lt;/HashRouter&gt;
+  &lt;/StrictMode&gt;,
+)</code></pre>
+
+      <p><strong>Маршруты.</strong> <code>src/App.jsx</code>:</p>
+
+      <pre><code>&lt;Routes&gt;
+  &lt;Route path="/" element={&lt;HomePage /&gt;} /&gt;
+  &lt;Route path="/modules" element={&lt;ModulesPage /&gt;} /&gt;
+  &lt;Route path="/modules/:moduleId" element={&lt;ModulePage /&gt;} /&gt;
+  &lt;Route path="/modules/:moduleId/:lessonId" element={&lt;LessonPage /&gt;} /&gt;
+  &lt;Route path="/teacher" element={&lt;TeacherPage /&gt;} /&gt;
+  &lt;Route path="*" element={&lt;NotFoundPage /&gt;} /&gt;
+&lt;/Routes&gt;</code></pre>
+
+      <p>
+        <code>:moduleId</code> и <code>:lessonId</code> — это параметры. Если адрес
+        <code>#/modules/relativity/time-dilation</code>, то <code>moduleId</code>
+        будет <code>relativity</code>, а <code>lessonId</code> — <code>time-dilation</code>.
+      </p>
+
+      <p class="say">
+        Что сказать: «HashRouter нужен потому, что GitHub Pages не умеет отдавать
+        index.html на любой путь. С решёткой обновление страницы работает всегда».
+      </p>
+
+      <p>
+        Если спросят, почему не красивые адреса без решётки: «Можно, но тогда нужен
+        сервер с fallback или отдельная настройка. Для школьного проекта я выбрал
+        надёжность и бесплатный хостинг».
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>2. Как работает тема и почему она не мигает</h2>
+
+      <p>
+        Тема хранится в <code>localStorage</code> под ключом <code>alma-theme</code>.
+        Это обычное хранилище в браузере, как маленькая записная книжка. Никакого
+        сервера и аккаунта.
+      </p>
+
+      <p>
+        Главная тонкость: тему нужно поставить <strong>до</strong> первой отрисовки.
+        Если делать это в React, страница успеет показаться белой на долю секунды,
+        а потом станет тёмной. Это называется «мигание». Поэтому в
+        <code>index.html</code> стоит маленький скрипт, который выполняется сразу.
+      </p>
+
+      <pre><code>var saved = localStorage.getItem('alma-theme')
+var theme =
+  saved === 'light' || saved === 'dark'
+    ? saved
+    : window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
+
+document.documentElement.dataset.theme = theme</code></pre>
+
+      <p>
+        Дальше в CSS есть два набора переменных: обычный и
+        <code>:root[data-theme="light"]</code>. Компоненты используют
+        <code>var(--color-bg)</code> и не знают, какая тема сейчас. Поэтому
+        переключение — это смена одного атрибута, а не перерисовка всего сайта.
+      </p>
+
+      <div class="simple">
+        <p>
+          <strong>Аналогия.</strong> Это как выключатель света в комнате. Лампочки
+          и мебель те же, меняется только положение переключателя. И переключатель
+          запоминает, в каком положении ты его оставил.
+        </p>
+      </div>
+
+      <p class="say">
+        Что сказать: «Тема ставится inline-скриптом до отрисовки, поэтому нет белой
+        вспышки. Выбор хранится в localStorage. Если localStorage запрещён, сайт
+        работает, просто не запомнит тему».
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>3. Как запоминается прогресс</h2>
+
+      <p>
+        Прогресс — это обычный JSON-объект в <code>localStorage</code>. Ключ —
+        <code>moduleId/lessonId</code>, значение — <code>true</code>, если урок
+        пройден.
+      </p>
+
+      <pre><code>{
+  "relativity/classical-crisis": true,
+  "relativity/reference-frames": true
+}</code></pre>
+
+      <p><strong>Код.</strong> <code>src/lib/progress.js</code>:</p>
+
+      <pre><code>const STORAGE_KEY = 'alma-progress'
+
+export function getProgress() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}
+  } catch {
+    return {}
+  }
+}
+
+export function isLessonDone(moduleId, lessonId) {
+  return Boolean(getProgress()[`${moduleId}/${lessonId}`])
+}
+
+export function markLessonDone(moduleId, lessonId) {
+  const progress = getProgress()
+  progress[`${moduleId}/${lessonId}`] = true
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
+}</code></pre>
+
+      <p>
+        <code>try / catch</code> нужен на случай, если в localStorage лежит битый JSON
+        или браузер запрещает доступ. Тогда функция вернёт пустой объект, и сайт
+        не упадёт.
+      </p>
+
+      <p>
+        Итоговая работа открывается, когда пройдены все уроки:
+      </p>
+
+      <pre><code>const doneLessons = module.lessons.filter((lesson) =&gt;
+  isLessonDone(module.id, lesson.id),
+)
+const unlocked = doneLessons.length === module.lessons.length</code></pre>
+
+      <p>
+        Урок считается пройденным, когда ученик проверил все вопросы квиза, а не
+        когда ответил на 100% правильно. Это специально: цель — провести через
+        материал, а не наказать за ошибку. Оценка считается отдельно.
+      </p>
+
+      <div class="simple">
+        <p>
+          <strong>Аналогия.</strong> Это список галочек в блокноте. Галочка значит
+          «я это прошёл», а не «я это знаю на пять». Оценка — отдельная строка.
+        </p>
+      </div>
+
+      <p class="say">
+        Что сказать: «Прогресс хранится в localStorage, без аккаунтов и персональных
+        данных. Если очистить браузер, прогресс начнётся заново. Это ограничение
+        модели, но для школы это скорее плюс: я ничего не собираю».
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>4. Как работает квиз</h2>
+
+      <p>
+        Квиз — это маленькая машина состояний. Сначала он не начат, потом начат,
+        потом ответы выбраны, потом проверены, потом результат. Всё это хранится
+        в трёх переменных:
+      </p>
+
+      <ul>
+        <li><code>started</code> — квиз начат или нет;</li>
+        <li><code>selected</code> — какой вариант выбрал ученик в каждом вопросе;</li>
+        <li><code>checked</code> — какие вопросы уже проверены.</li>
+      </ul>
+
+      <p><strong>Подсчёт.</strong> <code>src/components/Quiz/Quiz.jsx</code>:</p>
+
+      <pre><code>const allChecked = questions.every((question) =&gt; checked[question.id])
+const score = questions.filter(
+  (question) =&gt;
+    checked[question.id] &amp;&amp;
+    selected[question.id] === question.correct,
+).length
+const ratio = questions.length &gt; 0 ? score / questions.length : 0</code></pre>
+
+      <p>
+        <code>score</code> — сколько правильных. <code>ratio</code> — доля правильных
+        от всех. Дальше оценка:
+      </p>
+
+      <pre><code>function gradeFor(ratio) {
+  if (ratio &gt;= 0.9) return 5
+  if (ratio &gt;= 0.75) return 4
+  if (ratio &gt;= 0.6) return 3
+  return 2
+}</code></pre>
+
+      <p>
+        Пороги: 90%, 75%, 60%. Ниже 60% — двойка. Пересдача не ограничена: кнопка
+        «Пройти ещё раз» очищает <code>selected</code>, <code>checked</code> и
+        <code>started</code>.
+      </p>
+
+      <p><strong>Как скрывается урок.</strong> В CSS есть такой селектор:</p>
+
+      <pre><code>.lesson:has(.quiz--started)
+  &gt; *:not(.quiz--started):not(.page-title):not(.breadcrumbs) {
+  display: none;
+}</code></pre>
+
+      <p>
+        Пока квиз не начат, класса <code>quiz--started</code> нет. Как только ученик
+        нажал «Начать», класс появляется, и всё содержимое урока кроме заголовка,
+        хлебных крошек и самого квиза исчезает.
+      </p>
+
+      <div class="simple">
+        <p>
+          <strong>Аналогия.</strong> Это как закрыть учебник перед ответом. Ты не
+          можешь подсмотреть, но и не обязан отвечать идеально. После проверки
+          учебник открывается снова.
+        </p>
+      </div>
+
+      <p>
+        <strong>Честно.</strong> Это не античит. Любой, кто откроет DevTools, увидит
+        вопросы в коде страницы. Для школьной самопроверки этого достаточно: убирается
+        соблазн, а не создаётся защита уровня экзамена.
+      </p>
+
+      <p class="say">
+        Что сказать: «Во время квиза текст урока скрывается через CSS :has. Это режим
+        самопроверки, а не античит. Для настоящей защиты нужен сервер, который
+        выдаёт вопросы и принимает ответы».
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>5. Как собирается вариант — самое сложное</h2>
+
+      <p>
+        Это, наверное, главный алгоритм проекта. Разберём по шагам.
+      </p>
+
+      <h3>5.1. Зачем нужен seed</h3>
+
+      <p>
+        Если использовать <code>Math.random()</code>, каждый раз будет новый набор
+        заданий. Это удобно, но нельзя повторить. А учителю нужно: распечатал работу,
+        потерял лист, хочет распечатать снова — и получить тот же вариант.
+      </p>
+
+      <p>
+        Поэтому используется <strong>детерминированный генератор</strong>.
+        Ему дают число — seed. Одно и то же число всегда даёт одну и ту же
+        последовательность случайных чисел. Seed печатается внизу листа как
+        «код варианта».
+      </p>
+
+      <div class="simple">
+        <p>
+          <strong>Аналогия.</strong> Это как зерно в Minecraft. Одно число задаёт
+          целый мир. Здесь одно число задаёт набор задач.
+        </p>
+      </div>
+
+      <h3>5.2. Mulberry32</h3>
+
+      <p><strong>Код.</strong> <code>src/teacher/rng.js</code>:</p>
+
+      <pre><code>export function makeRng(seed) {
+  let state = (seed &gt;&gt;&gt; 0) || 1
+
+  function next() {
+    state = (state + 0x6d2b79f5) &gt;&gt;&gt; 0
+    let t = state
+    t = Math.imul(t ^ (t &gt;&gt;&gt; 15), t | 1)
+    t ^= t + Math.imul(t ^ (t &gt;&gt;&gt; 7), t | 61)
+    return ((t ^ (t &gt;&gt;&gt; 14)) &gt;&gt;&gt; 0) / 4294967296
+  }
+
+  function int(min, max) {
+    return min + Math.floor(next() * (max - min + 1))
+  }
+
+  function pick(list) {
+    return list[int(0, list.length - 1)]
+  }
+
+  function shuffle(list) {
+    const result = [...list]
+    for (let i = result.length - 1; i &gt; 0; i -= 1) {
+      const j = int(0, i)
+      const temp = result[i]
+      result[i] = result[j]
+      result[j] = temp
+    }
+    return result
+  }
+
+  return { next, int, pick, shuffle }
+}</code></pre>
+
+      <p>
+        Что здесь важно понимать, не запоминая формулы:
+      </p>
+
+      <ul>
+        <li><code>state</code> — внутреннее состояние. Оно меняется при каждом вызове.</li>
+        <li><code>next()</code> возвращает число от 0 до 1. Это аналог <code>Math.random()</code>, только предсказуемый.</li>
+        <li><code>int(min, max)</code> превращает дробь в целое в нужном диапазоне.</li>
+        <li><code>pick(list)</code> выбирает случайный элемент.</li>
+        <li><code>shuffle(list)</code> перемешивает список.</li>
+      </ul>
+
+      <p>
+        <code>shuffle</code> — это алгоритм Fisher–Yates. Идём с конца списка и
+        меняем текущий элемент со случайным из начала. Так каждый элемент может
+        оказаться на любом месте, и все варианты равновероятны. Простой обмен
+        «первый с последним» так не работает.
+      </p>
+
+      <p>
+        Пример на пальцах: <code>[1, 2, 3]</code>. Берём индекс 2 (тройку), выбираем
+        случайный индекс от 0 до 2. Если выпал 0, меняем тройку и единицу:
+        <code>[3, 2, 1]</code>. Потом берём индекс 1, выбираем от 0 до 1, и так далее.
+      </p>
+
+      <h3>5.3. Сколько заданий каждого уровня</h3>
+
+      <p>
+        Учитель выбирает сложность: базовая, смешанная или повышенная. Внутри —
+        доли. Например, смешанная: 50% базовых, 35% повышенных, 15% высоких.
+      </p>
+
+      <p>
+        Если просто умножить и округлить, сумма может не совпасть. Для 10 заданий:
+        5 + 3,5 + 1,5. Целые части дают 9, одно задание «лишнее». Его отдают уровню
+        с самым большим остатком. Здесь остатки 0, 0,5 и 0,5. Одно задание уходит
+        повышенному уровню, получается 5 / 4 / 1. Сумма всегда ровно 10.
+      </p>
+
+      <p><strong>Код.</strong> <code>src/teacher/buildTest.js</code>:</p>
+
+      <pre><code>function quotaFor(count, mix) {
+  const rows = Object.entries(mix).map(([level, share]) =&gt; ({
+    level,
+    whole: Math.floor(share * count),
+    remainder: share * count - Math.floor(share * count),
+  }))
+
+  let left = count - rows.reduce((sum, row) =&gt; sum + row.whole, 0)
+  const byRemainder = [...rows].sort((a, b) =&gt; b.remainder - a.remainder)
+
+  let index = 0
+  while (left &gt; 0) {
+    byRemainder[index % byRemainder.length].whole += 1
+    index += 1
+    left -= 1
+  }
+
+  return Object.fromEntries(rows.map((row) =&gt; [row.level, row.whole]))
+}</code></pre>
+
+      <p>
+        <code>left</code> — сколько заданий осталось распределить.
+        <code>byRemainder</code> — уровни, отсортированные по остатку.
+        Цикл добавляет по одному, пока <code>left</code> не станет нулём.
+      </p>
+
+      <h3>5.4. Выбор задач без повторов</h3>
+
+      <p>
+        Дальше для каждого уровня берётся свой список генераторов. Он перемешивается,
+        и программа идёт по нему. Кандидат принимается, только если:
+      </p>
+
+      <ul>
+        <li>у него ровно три неверных варианта;</li>
+        <li>его текста ещё нет в <code>used</code>.</li>
+      </ul>
+
+      <p>
+        <code>used</code> — это <code>Set</code> с текстами уже выбранных задач.
+        <code>Set</code> не хранит повторы, поэтому проверка простая:
+        <code>!used.has(candidate.text)</code>.
+      </p>
+
+      <p><strong>Код, основная часть:</strong></p>
+
+      <pre><code>let pool = topic.generators.filter((generator) =&gt; generator.level === level)
+let order = rng.shuffle(pool)
+let cursor = 0
+
+for (let i = 0; i &lt; need; i += 1) {
+  let draft = null
+
+  for (let attempt = 0; attempt &lt; 40; attempt += 1) {
+    if (cursor &gt;= order.length) {
+      cursor = 0
+      order = rng.shuffle(pool)
+    }
+
+    const generator = order[cursor]
+    cursor += 1
+    const candidate = generator.build(rng)
+
+    if (
+      candidate &amp;&amp;
+      candidate.distractors.length === 3 &amp;&amp;
+      !used.has(candidate.text)
+    ) {
+      draft = candidate
+      break
+    }
+  }
+
+  if (!draft) return
+
+  used.add(draft.text)
+  const options = rng.shuffle([draft.correct, ...draft.distractors])
+
+  items.push({
+    level,
+    points: LEVELS[level].points,
+    text: draft.text,
+    options,
+    correctIndex: options.indexOf(draft.correct),
+    explanation: draft.explanation,
+  })
+}</code></pre>
+
+      <p>
+        Число 40 — это защита от бесконечного цикла. Если генератор по какой-то
+        причине не может выдать уникальную задачу, программа не зависнет, а просто
+        оставит это место пустым. Потом сработает запасной добор.
+      </p>
+
+      <p><strong>Запасной добор.</strong> Если заданий всё равно меньше нужного,
+      программа добирает из всех генераторов подряд, но не больше 500 попыток:</p>
+
+      <pre><code>if (items.length &lt; count) {
+  let guard = 0
+
+  while (items.length &lt; count &amp;&amp; guard &lt; 500) {
+    guard += 1
+    const generator = rng.pick(topic.generators)
+    const candidate = generator.build(rng)
+
+    if (!candidate || candidate.distractors.length !== 3 || used.has(candidate.text)) {
+      continue
+    }
+
+    used.add(candidate.text)
+    // ...добавляем задание
+  }
+}</code></pre>
+
+      <p>
+        В конце задания сортируются по уровню: сначала базовые, потом повышенные,
+        потом высокие. Внутри уровня порядок случайный. Так лист идёт от простого
+        к сложному.
+      </p>
+
+      <h3>5.5. Баллы</h3>
+
+      <p>
+        Каждый уровень весит по-разному: базовый — 1 балл, повышенный — 2,
+        высокий — 3. Поэтому оценка считается не по количеству заданий, а по сумме
+        баллов. Об этом следующий раздел.
+      </p>
+
+      <p class="say">
+        Что сказать: «Вариант собирается детерминированным генератором. Seed — это
+        код варианта, он печатается на листе. Один и тот же seed даёт тот же набор.
+        Сначала считаются квоты по уровням, потом выбираются задачи без повторов,
+        в конце всё сортируется от простого к сложному».
+      </p>
+
+      <p>
+        Если спросят, почему 40 и 500: «Это ограничители, чтобы программа не ушла
+        в бесконечный цикл, если генератор не может выдать уникальную задачу».
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>6. Откуда берутся неверные ответы</h2>
+
+      <p>
+        В тесте не должно быть вариантов «42», «—7» и «всё перечисленное». Неверные
+        ответы должны быть похожи на реальные ошибки ученика.
+      </p>
+
+      <p>
+        Правильный ответ считается формулой. Потом к нему добавляются типичные
+        ошибки: умножил вместо деления, забыл разделить, перепутал единицы.
+        Всё это фильтруется: вариант должен быть положительным и не совпадать
+        с правильным.
+      </p>
+
+      <p><strong>Код.</strong> <code>src/teacher/topics/helpers.js</code>:</p>
+
+      <pre><code>export function numericAnswer(value, unit, extraValues = []) {
+  const suffix = unit ? ` ${unit}` : ''
+  const correct = `${formatNumber(value)}${suffix}`
+  const seen = new Set([formatNumber(value)])
+  const distractors = []
+
+  function tryAdd(raw) {
+    if (distractors.length &gt;= 3) return
+    if (!Number.isFinite(raw) || raw &lt;= 0) return
+
+    const text = formatNumber(raw)
+    if (seen.has(text)) return
+
+    seen.add(text)
+    distractors.push(`${text}${suffix}`)
+  }
+
+  const candidates = [...extraValues, value * 2, value / 2, value * 3, value / 4]
+  candidates.forEach(tryAdd)
+
+  return { correct, distractors }
+}</code></pre>
+
+      <p>
+        Пример. Скорость 12 м/с, время 5 с, путь 60 м. Правильный ответ — 12.
+        Кандидаты в неверные: 24, 6, 36, 3. Первые три уникальные и положительные,
+        они и попадут в вариант. Получится 12, 24, 6, 36. Все похожи на числа,
+        которые может получить ученик, если ошибётся в операции.
+      </p>
+
+      <p>
+        <code>formatNumber</code> делает числа по-русски: запятая вместо точки,
+        неразрывный пробел между тысячами. Поэтому в листе будет <code>12,5</code>,
+        а не <code>12.5</code>.
+      </p>
+
+      <p>
+        <strong>Честно.</strong> Алгоритм проверяет формат и вычисление, но не
+        проверяет, что задача методически идеальна для конкретного класса. Поэтому
+        в учительской есть предупреждения, а ИИ-задания обязательно проверяет человек.
+      </p>
+
+      <p class="say">
+        Что сказать: «Правильный ответ считается формулой, а не хранится в тексте.
+        Неверные варианты — типичные ошибки: удвоение, деление, забытые единицы.
+        Они фильтруются на уникальность и положительность».
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>7. Как считается оценка в работе учителя</h2>
+
+      <p>
+        Здесь шкала другая, чем у ученика. Задания разного уровня весят по-разному,
+        поэтому считать «процент правильных» неправильно. Считаем сумму баллов.
+      </p>
+
+      <p><strong>Код.</strong> <code>src/teacher/buildTest.js</code>:</p>
+
+      <pre><code>export function gradeScale(totalPoints) {
+  return {
+    five: Math.ceil(totalPoints * 0.85),
+    four: Math.ceil(totalPoints * 0.7),
+    three: Math.ceil(totalPoints * 0.5),
+  }
+}</code></pre>
+
+      <p>
+        <code>Math.ceil</code> округляет вверх. Если максимум 17 баллов:
+      </p>
+
+      <ul>
+        <li>«5» — с 15 (17 × 0,85 = 14,45, округляем вверх);</li>
+        <li>«4» — с 12 (17 × 0,7 = 11,9);</li>
+        <li>«3» — с 9 (17 × 0,5 = 8,5).</li>
+      </ul>
+
+      <p>
+        У ученика пороги другие: 90 / 75 / 60 процентов. Это не ошибка. У ученика
+        все вопросы равны, поэтому можно считать долю. У учителя задания весят
+        по-разному, поэтому считаем баллы.
+      </p>
+
+      <p class="say">
+        Что сказать: «Оценка в учительской работе считается по сумме баллов, потому
+        что задания разного уровня. Пороги — 85, 70 и 50 процентов от максимума.
+        У ученической итоговой работы другая шкала, потому что там все вопросы равны».
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>8. Как лист становится страницей A4</h2>
+
+      <p>
+        Лист — это обычный <code>&lt;article&gt;</code> шириной 210 мм и минимальной
+        высотой 297 мм. На экране он выглядит как бумага. При печати CSS убирает
+        тени и говорит браузеру, что это A4.
+      </p>
+
+      <pre><code>.sheet {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 15mm 14mm;
+  background: #ffffff;
+  color: #14171a;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .sheet {
+    page-break-after: always;
+  }
+
+  .sheet-tasks &gt; li {
+    page-break-inside: avoid;
+  }
+}</code></pre>
+
+      <p>
+        Что делает каждая строка:
+      </p>
+
+      <ul>
+        <li><code>@page { size: A4 }</code> — формат страницы.</li>
+        <li><code>.no-print</code> — скрывает кнопки и навигацию на бумаге.</li>
+        <li><code>page-break-after: always</code> — каждый вариант и ключ с новой страницы.</li>
+        <li><code>page-break-inside: avoid</code> — задание не разрывается между страницами.</li>
+      </ul>
+
+      <p>
+        Ключ — отдельный лист. Поэтому ученикам можно печатать только страницы
+        с вариантами, а ключ оставить учителю. Это делается выбором диапазона
+        страниц в диалоге печати.
+      </p>
+
+      <p>
+        PDF отдельно генерировать не нужно. Браузер сам умеет «Печать → Сохранить
+        как PDF». Поэтому в проекте нет библиотеки для PDF и нет сервера, который
+        что-то рендерит.
+      </p>
+
+      <p class="say">
+        Что сказать: «Лист A4 — это HTML с размерами в миллиметрах и print-стилями.
+        PDF получается через системную печать браузера. Ключ печатается отдельно,
+        чтобы его не видели ученики».
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>9. Как собирается презентация .pptx</h2>
+
+      <p>
+        Презентация собирается на устройстве учителя через библиотеку
+        <code>pptxgenjs</code>. Это не картинки слайдов, а настоящие текстовые
+        блоки и фигуры. Их можно открыть в PowerPoint, Keynote или «Р7-Офис»
+        и редактировать.
+      </p>
+
+      <pre><code>export async function downloadPresentation({ meta, slides }) {
+  const module = await import('pptxgenjs')
+  const PptxGenJS = module.default
+
+  const pptx = new PptxGenJS()
+  pptx.layout = 'LAYOUT_WIDE'
+  pptx.author = 'Alma'
+
+  slides.forEach((item, index) =&gt; {
+    const slide =
+      index === 0
+        ? addTitleSlide(pptx, meta, item)
+        : addContentSlide(pptx, meta, item, index + 1, slides.length)
+
+    if (item.note) slide.addNotes(item.note)
+  })
+
+  await pptx.writeFile({ fileName: `${fileBaseName(meta)}.pptx` })
+}</code></pre>
+
+      <p>
+        <code>import('pptxgenjs')</code> — динамический импорт. Библиотека тяжёлая,
+        поэтому она загружается только в момент экспорта, а не при открытии сайта.
+        В сборке она вынесена в отдельный файл.
+      </p>
+
+      <p>
+        <code>LAYOUT_WIDE</code> — формат 16:9, 13,333 × 7,5 дюйма. Первый слайд
+        титульный, остальные — заголовок, акцентная линия, список пунктов и номер.
+        Заметки докладчика добавляются в заметки слайда, а не на экран.
+      </p>
+
+      <p>
+        <strong>Как это связано с ИИ.</strong> Слайды приходят из ИИ-черновика,
+        а <code>.pptx</code> собирается прямо в браузере. Экспорт работает и без сети,
+        если массив слайдов уже есть. Генерация черновика описана в главе 10.
+      </p>
+
+      <p class="say">
+        Что сказать: «Презентация собирается в браузере через pptxgenjs. Текст
+        и фигуры остаются редактируемыми, потому что я не вставляю скриншоты.
+        Библиотека грузится только при экспорте, поэтому сайт не тормозит».
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>10. Как устроен ИИ-генератор</h2>
+
+      <p>
+        Прямой доступ к модели нельзя держать в JavaScript: любой пользователь откроет
+        исходники и увидит его. Поэтому нужен сервер-посредник: браузер обращается
+        к нему, а он уже идёт к модели. В Alma посредник работает на Cloudflare Pages
+        Functions, а модель — Workers AI. Отдельного ключа нет: модель запускается
+        на стороне Cloudflare, поэтому в проекте нечего случайно закоммитить.
+      </p>
+
+      <pre><code>Браузер → POST /api/generate → Cloudflare Pages Function → Workers AI
+                │
+                ├── CORS: только свои сайты
+                ├── проверка входа
+                ├── лимит 20 запросов в час с IP
+                ├── строгий промпт
+                ├── таймаут 65 секунд
+                ├── разбор JSON
+                └── проверка каждого задания</code></pre>
+
+      <p><strong>Почему Cloudflare.</strong> Сайт лежит на GitHub Pages, а там нет PHP.
+          Cloudflare Pages Functions — бесплатный серверный код без карты и отдельного
+          хостинга. Workers AI даёт 10 000 Neurons в сутки: этого хватает на несколько
+          десятков черновиков. Основной адрес записан в <code>.env.production</code>.</p>
+
+      <p><strong>CORS.</strong> Сервер принимает запросы только с адресов из белого
+      списка. Если сайт чужой, вернёт 403. Это не даёт посторонним тратить бесплатный
+      дневной запас через свой сайт.</p>
+
+      <pre><code>const ALLOWED_ORIGINS = new Set([
+  'https://alma-edu.ru',
+  'https://www.alma-edu.ru',
+  'https://qqquies.github.io',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+])
+
+if (origin &amp;&amp; !ALLOWED_ORIGINS.has(origin)) {
+  return json({ error: 'Этот сайт не имеет доступа к генератору.' }, 403, cors)
+}</code></pre>
+
+      <p><strong>Лимит.</strong> С одного IP принимается не больше 20 запросов в час.
+      Счётчик живёт в памяти экземпляра Worker и сбрасывается при перезапуске, поэтому
+      это ограничитель от зацикливания, а не полноценная защита. Главный ограничитель —
+      дневной запас Workers AI.</p>
+
+      <pre><code>if (entry.count &gt;= RATE_LIMIT) {
+  throw new HttpError(
+    429,
+    'Слишком много запросов с этого адреса. Подождите немного и попробуйте снова.',
+  )
+}</code></pre>
+
+      <p><strong>Защита от подсказок.</strong> Тема приходит от учителя. Модель
+      может попытаться выполнить инструкцию, спрятанную в тексте темы. Поэтому
+      в промпте сказано: тема — это данные, а не команда. Это называется
+      prompt injection, и с ним борются именно так.</p>
+
+      <p><strong>Проверка ответа.</strong> Сервер принимает только задания, где
+      ровно четыре разных варианта и <code>correctIndex</code> от 0 до 3. Битые
+      задания отбрасываются. Клиент проверяет ещё раз, чтобы в вёрстку не попал
+      мусор.</p>
+
+      <pre><code>// Ровно четыре разных варианта — иначе задание не печатаем.
+if (options.length !== 4 || new Set(options).size !== 4) continue
+
+let correct = raw.correctIndex
+
+if (typeof correct === 'string' &amp;&amp; /^\d+$/.test(correct)) {
+  correct = Number(correct)
+}
+
+if (!Number.isInteger(correct) || correct &lt; 0 || correct &gt; 3) continue</code></pre>
+
+      <p>
+        Если модель сомневается в ответе, она ставит <code>check: "mismatch"</code>.
+        В интерфейсе такое задание помечается «проверить ответ». Это не оценка,
+        а сигнал учителю.
+      </p>
+
+      <p>
+        <strong>Статус.</strong> ИИ подключён и работает: 5 заданий генерируются
+        примерно за 20–40 секунд, 8 слайдов — за 20–25 секунд. Модель может ошибиться
+        в арифметике, поэтому черновик всегда проходит экран проверки. На сервере есть
+        белый список сайтов, лимит и проверка формата; для серверной части написаны
+        12 автотестов. Банк физики, уроки, печать и прогресс по-прежнему работают
+        без ИИ.
+      </p>
+
+      <p class="say">
+        Что сказать: «ИИ работает как черновик. Браузер отправляет тему на Cloudflare,
+        сервер вызывает Workers AI и проверяет формат ответа. Отдельного ключа нет.
+        Модель не ставит оценки: учитель проверяет каждое задание и каждый слайд».
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>11. Как двигаются симуляции</h2>
+
+      <p>
+        Все три модели используют общий хук <code>useAnimationFrame</code>.
+        Он вызывает функцию на каждом кадре и передаёт время с прошлого кадра
+        в секундах — <code>dt</code>.
+      </p>
+
+      <pre><code>export default function useAnimationFrame(callback, active = true) {
+  const callbackRef = useRef(callback)
+
+  useEffect(() =&gt; {
+    callbackRef.current = callback
+  })
+
+  useEffect(() =&gt; {
+    if (!active) return undefined
+
+    let frameId
+    let lastTime = performance.now()
+
+    const loop = (now) =&gt; {
+      const dt = Math.min((now - lastTime) / 1000, 0.05)
+      lastTime = now
+      callbackRef.current(dt)
+      frameId = requestAnimationFrame(loop)
+    }
+
+    frameId = requestAnimationFrame(loop)
+    return () =&gt; cancelAnimationFrame(frameId)
+  }, [active])
+}</code></pre>
+
+      <p>
+        Зачем ограничение <code>0.05</code>: если вкладка была свёрнута 10 секунд,
+        без ограничения объект телепортировался бы через весь экран. С ограничением
+        движение продолжится плавно.
+      </p>
+
+      <p>
+        <code>active</code> — это пауза. Когда <code>active = false</code>, новый
+        кадр не запрашивается, браузер не тратит ресурсы. <code>cancelAnimationFrame</code>
+        в очистке нужен, чтобы при уходе со страницы цикл остановился.
+      </p>
+
+      <h3>11.1. Световые часы</h3>
+
+      <p>
+        В модели два одинаковых прибора. У покоящихся фотон проходит расстояние
+        между зеркалами за <code>HALF_TICK</code>. У движущихся тот же цикл
+        растягивается в <code>gamma</code> раз.
+      </p>
+
+      <div class="formula">
+        gamma = 1 / sqrt(1 - beta²)<br />
+        tau = gamma * HALF_TICK
+      </div>
+
+      <p>
+        <code>beta</code> — доля скорости света. При 0,6 gamma равна 1,25,
+        при 0,95 — примерно 3,2. Чем быстрее часы, тем реже они «тикают».
+      </p>
+
+      <pre><code>const gamma = 1 / Math.sqrt(1 - beta * beta)
+const tau = gamma * HALF_TICK
+
+movPhase.current += dt
+if (movPhase.current &gt;= tau) {
+  movPhase.current -= tau
+  movDir.current *= -1
+  movCountRef.current += 1
+  setMovCount(movCountRef.current)
+}</code></pre>
+
+      <p>
+        Счётчики отражений показывают разницу. След фотона — это ломаная: он
+        движется вверх-вниз и одновременно вправо вместе с часами.
+      </p>
+
+      <p>
+        <strong>Где я упростил.</strong> Это визуальная модель, а не решение
+        уравнений Максвелла. Скорость света условна, наклонный путь не считается
+        отдельной траекторией — я задаю растяжение периода через gamma.
+      </p>
+
+      <h3>11.2. Молнии и поезд</h3>
+
+      <p>
+        В момент старта бьют две молнии. Свет расходится кругами радиуса
+        <code>r = c · t</code>. Поезд едет вправо, пассажир тоже.
+      </p>
+
+      <pre><code>const passengerX = CENTER_X + v * t
+const distRight = Math.abs(RIGHT_X - passengerX)
+const distLeft = Math.abs(passengerX - LEFT_X)
+
+if (!flags.passRight &amp;&amp; distRight &lt;= radius(t)) {
+  flags.passRight = true
+  // правая вспышка достигла пассажира
+}</code></pre>
+
+      <p>
+        Человек на платформе стоит в центре: расстояния до вспышек равны, свет
+        приходит одновременно. Пассажир едет вправо: правая вспышка оказывается
+        ближе, левая — дальше. Поэтому правая достигает его раньше.
+      </p>
+
+      <p>
+        Флаги <code>passRight</code>, <code>platBoth</code>, <code>passLeft</code>
+        не дают событию записаться дважды.
+      </p>
+
+      <p>
+        <strong>Где я упростил.</strong> Скорости преувеличены. Настоящий поезд
+        не может ехать со скоростью, сравнимой со светом. Это мысленный эксперимент,
+        а не реальная установка.
+      </p>
+
+      <h3>11.3. Мяч в поезде</h3>
+
+      <p>
+        Для наблюдателя на платформе скорость мяча складывается из скорости поезда
+        и скорости мяча внутри вагона:
+      </p>
+
+      <div class="formula">v_мяча = trainSpeed + ballSpeed</div>
+
+      <pre><code>const scaledDt = dt * TIME_ZOOM
+
+frontX.current += trainSpeed * scaledDt
+
+if (ballActive.current) {
+  ballX.current += (trainSpeed + ballSpeed) * scaledDt
+}</code></pre>
+
+      <p>
+        <code>TIME_ZOOM = 4</code> ускоряет анимацию, но соотношение скоростей
+        сохраняется. Это классическая формула, а не релятивистская. Она нужна,
+        чтобы показать привычную картину, а потом сравнить её со светом.
+      </p>
+
+      <p class="say">
+        Что сказать: «Все модели используют общий цикл requestAnimationFrame.
+        dt ограничен 0,05 секунды, чтобы после свёрнутой вкладки объект не прыгал.
+        В световых часах период растягивается через gamma, в молниях события
+        считаются по радиусу света, в мяче — классическое сложение скоростей».
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>12. Как сайт попадает на домен</h2>
+
+      <p>
+        Сборка и публикация идут автоматически. При каждом push в <code>main</code>
+        GitHub Actions запускает workflow.
+      </p>
+
+      <pre><code>- name: Install dependencies
+  run: npm ci
+
+- name: Build
+  run: |
+    npm run build -- --base=./
+    cp dist/index.html dist/404.html
+
+- name: Upload artifact
+  uses: actions/upload-pages-artifact@v3
+  with:
+    path: dist</code></pre>
+
+      <p>
+        <code>npm ci</code> ставит зависимости строго по lock-файлу, поэтому сборка
+        воспроизводима. <code>--base=./</code> делает ссылки на файлы относительными.
+        Один и тот же билд работает и в подпапке <code>/alma-site/</code>, и в корне
+        домена.
+      </p>
+
+      <p>
+        <code>cp dist/index.html dist/404.html</code> — запасной вариант. Если
+        пользователь откроет неизвестный путь, GitHub отдаст <code>404.html</code>,
+        а там уже работает React Router.
+      </p>
+
+      <p>
+        <code>public/CNAME</code> содержит <code>alma-edu.ru</code>. При сборке файл
+        попадает в корень <code>dist</code>, и GitHub Pages понимает, какой домен
+        использовать.
+      </p>
+
+      <p>
+        DNS: четыре A-записи домена указывают на IP GitHub Pages, <code>www</code> —
+        CNAME на <code>qqquies.github.io</code>. Домен куплен в Timeweb, но сайт
+        живёт на GitHub Pages. Это разные услуги: домен — адрес, хостинг — место,
+        где лежат файлы.
+      </p>
+
+      <p>
+        HTTPS включается в настройках GitHub Pages после подтверждения домена.
+        Если кнопка «Enforce HTTPS» недоступна, обычно нужно подождать, пока DNS
+        подтвердится и выпустится сертификат.
+      </p>
+
+      <p class="say">
+        Что сказать: «Сайт собирается в GitHub Actions и публикуется на GitHub Pages.
+        Относительные пути позволяют использовать один билд и на старом адресе,
+        и на домене. Домен куплен в Timeweb, DNS указывает на GitHub. ИИ-часть
+        живёт отдельно, на бесплатном Cloudflare Pages, поэтому PHP-хостинг не нужен».
+      </p>
+    </div>
+
+    <div class="chapter">
+      <h2>13. Быстрые ответы на вопросы</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Вопрос</th>
+            <th>Ответ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Почему не готовый конструктор тестов?</td>
+            <td>Готовые сервисы требуют подписку и интернет. Мой банк работает офлайн, ответы считаются формулами, а вариант можно воспроизвести по коду.</td>
+          </tr>
+          <tr>
+            <td>Как работает ИИ?</td>
+            <td>Браузер отправляет тему на Cloudflare Pages Function. Сервер добавляет промпт, вызывает Workers AI, проверяет формат и возвращает черновик. Учитель проверяет каждое задание и каждый слайд.</td>
+          </tr>
+          <tr>
+            <td>Почему нет автотестов?</td>
+            <td>Честно: пока проверял вручную, линтером и сборкой. Следующий шаг — тесты для генератора, rng и шкалы оценок.</td>
+          </tr>
+          <tr>
+            <td>Прогресс потеряется?</td>
+            <td>Да, если очистить браузер или зайти с другого устройства. Это плата за отсутствие аккаунтов и сбора данных.</td>
+          </tr>
+          <tr>
+            <td>Скрытие материала — это античит?</td>
+            <td>Нет. Это режим самопроверки. Для настоящего античита нужен сервер, который выдаёт вопросы и принимает ответы.</td>
+          </tr>
+          <tr>
+            <td>Сколько стоит сайт?</td>
+            <td>Домен — примерно 200–300 рублей в год. GitHub Pages и Cloudflare Pages бесплатны. Workers AI — в пределах бесплатного дневного запаса, карта не нужна.</td>
+          </tr>
+          <tr>
+            <td>Что дальше?</td>
+            <td>Тесты интерфейса, новые предметы и модули, синхронизация прогресса.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chapter">
+      <h2>14. Мини-словарь</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Слово</th>
+            <th>Простыми словами</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>React</td><td>Библиотека, которая собирает страницу из кусочков-компонентов.</td></tr>
+          <tr><td>Компонент</td><td>Функция, которая возвращает кусок страницы. Например, кнопка или карточка.</td></tr>
+          <tr><td>Состояние</td><td>Переменная, при изменении которой страница перерисовывается.</td></tr>
+          <tr><td>Vite</td><td>Инструмент, который собирает проект в файлы для браузера.</td></tr>
+          <tr><td>localStorage</td><td>Маленькое хранилище в браузере. Данные остаются после перезагрузки.</td></tr>
+          <tr><td>Seed</td><td>Число, которое задаёт последовательность случайных чисел.</td></tr>
+          <tr><td>PRNG</td><td>Генератор псевдослучайных чисел. Выглядит случайным, но повторяется при том же seed.</td></tr>
+          <tr><td>Canvas</td><td>Область, на которой можно рисовать линии и фигуры кодом.</td></tr>
+          <tr><td>CORS</td><td>Правило браузера: какой сайт может обращаться к серверу.</td></tr>
+          <tr><td>Прокси</td><td>Посредник. Браузер говорит с ним, он — с моделью.</td></tr>
+          <tr><td>PPTX</td><td>Формат презентации PowerPoint.</td></tr>
+          <tr><td>A4</td><td>Размер бумаги 210 × 297 мм.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chapter">
+      <h2>15. Что я понял по ходу</h2>
+
+      <p>
+        Самое полезное решение — разделить случайность и логику. Генератор чисел
+        ничего не знает о задачах, а сборщик ничего не знает о том, как устроен
+        mulberry32. Поэтому можно менять уровни и темы, не трогая генератор.
+      </p>
+
+      <p>
+        Второе — не тащить сервер туда, где он не нужен. Уроки, банк и печать
+        работают в браузере. Это быстрее, дешевле и надёжнее для школы. Сервер
+        появился только там, где без него нельзя, — для доступа к модели ИИ.
+      </p>
+
+      <p>
+        Третье — честные ограничения. Нет автотестов, прогресс не синхронизируется,
+        скрытие материала не античит. Если говорить об этом прямо, на защите
+        не придётся выкручиваться.
+      </p>
+
+      <p class="small">
+        Если какой-то раздел всё равно непонятен — открой соответствующий файл
+        и прочитай код рядом с комментариями. В проекте почти везде есть короткие
+        пояснения по-русски.
+      </p>
+    </div>
+  </body>
+</html>

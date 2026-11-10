@@ -275,7 +275,7 @@ function PresentationPage() {
                 {loading ? 'Генерирую презентацию…' : 'Сгенерировать презентацию'}
               </button>
               <span className="teacher-offline">
-                Ключ модели хранится на сервере Alma и не попадает в браузер.
+                Модель работает на стороне Cloudflare, доступ к ней не попадает в браузер.
               </span>
             </div>
           </form>
