@@ -52,16 +52,12 @@ function algebraPool(rng) {
 
     const a = rng.pick([2, 3, 4])
     const b = rng.pick([5, 6, 7])
-    const correct = `${a + b}x`
 
     items.push({
       level,
+      kind: 'open',
       text: `Приведите подобные слагаемые: ${a}x + ${b}x.`,
-      ...withOptions(rng, correct, [
-        `${a * b}x`,
-        `${a + b}x²`,
-        `${b - a}x`,
-      ]),
+      answer: `${a + b}x`,
       explanation: `Коэффициенты складываются: ${a} + ${b} = ${a + b}, поэтому получается ${a + b}x.`,
     })
   }
@@ -85,6 +81,14 @@ const RUSSIAN = [
     correctIndex: 0,
     explanation:
       'В слове «вода» гласную можно проверить: во́ды. Остальные слова — с непроверяемыми гласными.',
+  },
+  {
+    level: 'basic',
+    kind: 'open',
+    text: 'Запишите проверочное слово к слову «вода».',
+    answer: 'воды',
+    explanation:
+      'Безударную гласную в корне проверяют ударением: во́ды, поэтому пишется «вода».',
   },
   {
     level: 'basic',

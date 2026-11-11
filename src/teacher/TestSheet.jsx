@@ -2,9 +2,15 @@ import { gradeScale } from './buildTest'
 
 const LETTERS = ['А', 'Б', 'В', 'Г']
 
+function isOpenAnswer(item) {
+  return item.kind === 'open'
+}
+
 // Один вариант работы — ровно один лист А4 (плюс бланк ответов).
 export function TestSheet({ variant, meta, number }) {
   const scale = gradeScale(variant.totalPoints)
+  const hasOpen = variant.items.some(isOpenAnswer)
+  const hasChoice = variant.items.some((item) => !isOpenAnswer(item))
 
   return (
     <article className="sheet">
@@ -45,9 +51,13 @@ export function TestSheet({ variant, meta, number }) {
       </p>
 
       <p className="sheet-instruction">
-        <strong>Инструкция.</strong> В каждом задании выберите один верный
-        ответ. Букву ответа запишите в бланк в конце работы. Задания разного
-        уровня оцениваются разным числом баллов.
+        <strong>Инструкция.</strong>{' '}
+        {hasOpen && hasChoice
+          ? 'В заданиях с выбором ответа запишите букву в бланк. В заданиях с кратким ответом запишите полученный ответ на отведённой строке.'
+          : hasOpen
+            ? 'В каждом задании запишите краткий ответ на отведённой строке.'
+            : 'В каждом задании выберите один верный ответ. Букву ответа запишите в бланк в конце работы.'}{' '}
+        Задания разного уровня оцениваются разным числом баллов.
       </p>
 
       <ol className="sheet-tasks">
@@ -57,28 +67,60 @@ export function TestSheet({ variant, meta, number }) {
               {item.text}{' '}
               <span className="sheet-points">({item.points} б.)</span>
             </p>
-            <ul className="sheet-options">
-              {item.options.map((option, optionIndex) => (
-                <li key={optionIndex}>
-                  <span className="sheet-letter">{LETTERS[optionIndex]})</span>
-                  <span>{option}</span>
-                </li>
-              ))}
-            </ul>
+            {isOpenAnswer(item) ? (
+              <p className="sheet-task-answer">
+                Ответ: <span className="sheet-open-line" />
+              </p>
+            ) : (
+              <ul className="sheet-options">
+                {item.options.map((option, optionIndex) => (
+                  <li key={optionIndex}>
+                    <span className="sheet-letter">{LETTERS[optionIndex]})</span>
+                    <span>{option}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ol>
 
       {meta.showAnswerForm && (
         <div className="sheet-answers">
-          <p className="sheet-answers-title">Бланк ответов</p>
-          <ol className="sheet-answer-grid">
-            {variant.items.map((_, itemIndex) => (
-              <li key={itemIndex}>
-                <span>{itemIndex + 1}</span>
-              </li>
-            ))}
-          </ol>
+          {hasChoice && (
+            <>
+              <p className="sheet-answers-title">
+                {hasOpen ? 'Бланк ответов: задания с выбором' : 'Бланк ответов'}
+              </p>
+              <ol className="sheet-answer-grid">
+                {variant.items.map((item, itemIndex) =>
+                  isOpenAnswer(item) ? null : (
+                    <li key={itemIndex}>
+                      <span>{itemIndex + 1}</span>
+                    </li>
+                  ),
+                )}
+              </ol>
+            </>
+          )}
+
+          {hasOpen && (
+            <>
+              <p className="sheet-answers-title sheet-answers-title--open">
+                Задания с кратким ответом
+              </p>
+              <ol className="sheet-open-grid">
+                {variant.items.map((item, itemIndex) =>
+                  isOpenAnswer(item) ? (
+                    <li key={itemIndex}>
+                      <span>№ {itemIndex + 1}</span>
+                      <span className="sheet-open-line" />
+                    </li>
+                  ) : null,
+                )}
+              </ol>
+            </>
+          )}
         </div>
       )}
 
@@ -122,7 +164,11 @@ export function AnswerKey({ test, meta }) {
                 {variant.items.map((item, itemIndex) => (
                   <tr key={itemIndex}>
                     <td>{itemIndex + 1}</td>
-                    <td className="key-answer">{LETTERS[item.correctIndex]}</td>
+                    <td className="key-answer">
+                      {isOpenAnswer(item)
+                        ? item.answer
+                        : LETTERS[item.correctIndex]}
+                    </td>
                     <td>{item.points}</td>
                     {meta.showSolutions && <td>{item.explanation}</td>}
                   </tr>

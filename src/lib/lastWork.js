@@ -23,11 +23,9 @@ function write(key, value) {
   }
 }
 
-function isItem(item) {
+function isChoiceItem(item) {
   return Boolean(
-    item &&
-      typeof item.text === 'string' &&
-      Array.isArray(item.options) &&
+    Array.isArray(item.options) &&
       item.options.length === 4 &&
       item.options.every((option) => typeof option === 'string') &&
       Number.isInteger(item.correctIndex) &&
@@ -35,6 +33,24 @@ function isItem(item) {
       item.correctIndex <= 3 &&
       typeof item.points === 'number' &&
       typeof item.explanation === 'string',
+  )
+}
+
+function isOpenItem(item) {
+  return Boolean(
+    item.kind === 'open' &&
+      typeof item.answer === 'string' &&
+      item.answer.trim().length > 0 &&
+      typeof item.points === 'number' &&
+      typeof item.explanation === 'string',
+  )
+}
+
+function isItem(item) {
+  return Boolean(
+    item &&
+      typeof item.text === 'string' &&
+      (isChoiceItem(item) || isOpenItem(item)),
   )
 }
 

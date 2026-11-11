@@ -36,6 +36,30 @@ function normalize(payload) {
     const correctIndex = Number(raw?.correctIndex)
     const explanation = String(raw?.explanation ?? '').trim()
     const level = LEVELS[raw?.level] ? raw.level : 'basic'
+    const answer = String(raw?.answer ?? '')
+      .trim()
+      .replace(/^ответ\s*[:：]\s*/i, '')
+      .replace(/\s+/g, ' ')
+      .slice(0, 120)
+
+    const wantsOpen =
+      raw?.kind === 'open' ||
+      (raw?.kind !== 'choice' && !Array.isArray(raw?.options) && answer.length > 0)
+
+    if (wantsOpen) {
+      if (text.length === 0 || answer.length === 0) return
+
+      items.push({
+        kind: 'open',
+        text,
+        answer,
+        explanation,
+        level,
+        points: LEVELS[level].points,
+        needsCheck: raw?.check === 'mismatch',
+      })
+      return
+    }
 
     const valid =
       text.length > 0 &&
@@ -48,6 +72,7 @@ function normalize(payload) {
     if (!valid) return
 
     items.push({
+      kind: 'choice',
       text,
       options,
       correctIndex,
@@ -81,15 +106,28 @@ async function postToAI(body, fallbackMessage) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
 
-  let response
-
-  try {
-    response = await fetch(ENDPOINT, {
+  function request() {
+    return fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       signal: controller.signal,
     })
+  }
+
+  let response
+
+  try {
+    try {
+      response = await request()
+    } catch (error) {
+      if (error.name === 'AbortError') throw error
+
+      // Сетевая ошибка часто оказывается случайной: DNS, Wi-Fi или
+      // кратковременный сбой прокси. Одна быстрая повторная попытка
+      // спасает урок, но не превращается в бесконечный спиннер.
+      response = await request()
+    }
   } catch (error) {
     if (error.name === 'AbortError') {
       throw new Error(
@@ -134,7 +172,7 @@ export async function generateDraft(params) {
 
   const data = await postToAI(
     params,
-    'Сервер генерации недоступен. Проверьте интернет или соберите работу из банка Alma.',
+    'Не удалось связаться с сервером генерации. Проверьте интернет и попробуйте ещё раз — или соберите работу из банка Alma.',
   )
 
   const result = normalize(data)
@@ -187,7 +225,7 @@ export async function generatePresentation(params) {
 
   const data = await postToAI(
     { ...params, kind: 'presentation' },
-    'Сервер не смог собрать презентацию. Попробуйте позже.',
+    'Не удалось связаться с сервером генерации презентации. Попробуйте ещё раз.',
   )
 
   const result = normalizePresentation(data)

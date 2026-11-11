@@ -167,6 +167,66 @@ test('items with the wrong number of options are dropped', async () => {
   assert.equal(data.items[0].text, 'Хорошее задание')
 })
 
+test('a draft can mix choice and open-answer items', async () => {
+  const { response, data } = await call(
+    post({
+      subject: 'Алгебра',
+      grade: '8',
+      topic: 'Квадратные корни',
+      count: 2,
+      difficulty: 'mixed',
+    }),
+    envWith(
+      draft([
+        {
+          kind: 'choice',
+          text: 'Выберите верное равенство',
+          options: ['√9 = 3', '√9 = 2', '√9 = 4', '√9 = 5'],
+          correctIndex: 0,
+          explanation: 'Квадрат трёх равен девяти.',
+          level: 'advanced',
+          check: 'ok',
+        },
+        {
+          kind: 'open',
+          text: 'Вычислите: √16 + √25',
+          answer: '9',
+          explanation: '√16 = 4, √25 = 5, поэтому 4 + 5 = 9.',
+          level: 'basic',
+          check: 'ok',
+        },
+      ]),
+    ),
+  )
+
+  assert.equal(response.status, 200)
+  assert.equal(data.items.length, 2)
+  assert.equal(data.items[0].kind, 'open')
+  assert.equal(data.items[0].answer, '9')
+  assert.equal(data.items[0].options, undefined)
+  assert.equal(data.items[1].kind, 'choice')
+  assert.equal(data.items[1].correctIndex, 0)
+})
+
+test('an open-answer item without an answer is dropped', async () => {
+  const { response, data } = await call(
+    post({ subject: 'Алгебра', topic: 'Корни', count: 1 }),
+    envWith(
+      draft([
+        {
+          kind: 'open',
+          text: 'Вычислите: √49',
+          answer: '',
+          level: 'basic',
+        },
+      ]),
+    ),
+  )
+
+  assert.equal(response.status, 502)
+  assert.match(data.error, /неизвестном формате/)
+})
+
 test('an explanation that contradicts the chosen option is flagged', async () => {
   const { response, data } = await call(
     post({ subject: 'Алгебра', topic: 'Уравнения', count: 2 }),

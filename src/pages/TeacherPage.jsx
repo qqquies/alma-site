@@ -74,7 +74,10 @@ function summarize(variant) {
     counts[item.level] += 1
   })
 
-  return `Заданий: ${variant.items.length} · Баллов: ${variant.totalPoints} · базовых ${counts.basic}, повышенных ${counts.advanced}, высоких ${counts.high}`
+  const open = variant.items.filter((item) => item.kind === 'open').length
+  const openNote = open > 0 ? ` · с кратким ответом ${open}` : ''
+
+  return `Заданий: ${variant.items.length}${openNote} · Баллов: ${variant.totalPoints} · базовых ${counts.basic}, повышенных ${counts.advanced}, высоких ${counts.high}`
 }
 
 function TeacherPage() {
@@ -526,8 +529,9 @@ function TeacherPage() {
         {!isBank && (
           <p className="teacher-note">
             ИИ присылает черновик: вы увидите каждое задание, сможете
-            поправить формулировку и отметить верный ответ. Обычно генерация
-            занимает 15–40 секунд.
+            поправить формулировку и проверить ответ. В работе будут и
+            тестовые задания с вариантами, и задачи с кратким ответом, где
+            ученик считает сам. Обычно генерация занимает 15–40 секунд.
             {isMockMode() &&
               ' Сейчас включён демонстрационный режим: задания заготовлены заранее.'}
           </p>

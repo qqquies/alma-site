@@ -29,9 +29,12 @@ function DraftReview({
     items.every(
       (item) =>
         item.text.trim().length > 0 &&
-        item.options.every((option) => option.trim().length > 0),
+        (item.kind === 'open'
+          ? item.answer.trim().length > 0
+          : item.options.every((option) => option.trim().length > 0)),
     )
 
+  const openCount = items.filter((item) => item.kind === 'open').length
   const totalPoints = items.reduce((sum, item) => sum + item.points, 0)
 
   return (
@@ -64,15 +67,19 @@ function DraftReview({
         <h1 className="page-title">Проверка черновика</h1>
         <p className="teacher-intro">
           Это черновик, а не готовая работа. Прочитайте формулировки,
-          отметьте верный ответ в каждом задании и удалите то, что не
-          подходит. Только после этого нажмите «К печати». Черновик сохранён
-          в этом браузере — можно закрыть вкладку и вернуться к проверке позже.
+          проверьте ответы и удалите то, что не подходит: у заданий
+          с выбором отметьте верный вариант, у заданий с кратким ответом
+          впишите эталонный ответ для ключа. Только после этого нажмите
+          «К печати». Черновик сохранён в этом браузере — можно закрыть
+          вкладку и вернуться к проверке позже.
         </p>
         <p className="draft-summary">
           {meta.subjectTitle} · {meta.grade ? `${meta.grade} класс` : 'класс не указан'} ·{' '}
           {meta.topicTitle}
           <br />
-          Заданий: {items.length} · Баллов: {totalPoints}
+          Заданий: {items.length}
+          {openCount > 0 ? ` (с кратким ответом: ${openCount})` : ''} · Баллов:{' '}
+          {totalPoints}
         </p>
         {draft.warnings.map((warning) => (
           <p className="draft-note" key={warning}>
@@ -86,6 +93,9 @@ function DraftReview({
           <article className="draft-card" key={index}>
             <div className="draft-card-head">
               <span className="draft-num">{index + 1}</span>
+              <span className="draft-kind">
+                {item.kind === 'open' ? 'краткий ответ' : 'с выбором'}
+              </span>
               <span className={`draft-level draft-level--${item.level}`}>
                 {LEVELS[item.level].label} · {item.points} б.
               </span>
@@ -108,36 +118,51 @@ function DraftReview({
               onChange={(event) => patch(index, { text: event.target.value })}
             />
 
-            <div className="draft-options">
-              {item.options.map((option, optionIndex) => (
-                <div
-                  className={`draft-option${
-                    item.correctIndex === optionIndex
-                      ? ' draft-option--correct'
-                      : ''
-                  }`}
-                  key={optionIndex}
-                >
-                  <input
-                    type="radio"
-                    name={`correct-${index}`}
-                    checked={item.correctIndex === optionIndex}
-                    onChange={() => patch(index, { correctIndex: optionIndex })}
-                    aria-label={`Верный ответ: ${LETTERS[optionIndex]}`}
-                  />
-                  <span className="draft-letter">{LETTERS[optionIndex]}</span>
-                  <input
-                    type="text"
-                    value={option}
-                    onChange={(event) => {
-                      const options = [...item.options]
-                      options[optionIndex] = event.target.value
-                      patch(index, { options })
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
+            {item.kind === 'open' ? (
+              <label className="draft-open-answer">
+                <span>Эталонный ответ</span>
+                <input
+                  type="text"
+                  value={item.answer}
+                  placeholder="Например, 9"
+                  onChange={(event) =>
+                    patch(index, { answer: event.target.value })
+                  }
+                />
+                <small>Ученик записывает ответ сам, без вариантов.</small>
+              </label>
+            ) : (
+              <div className="draft-options">
+                {item.options.map((option, optionIndex) => (
+                  <div
+                    className={`draft-option${
+                      item.correctIndex === optionIndex
+                        ? ' draft-option--correct'
+                        : ''
+                    }`}
+                    key={optionIndex}
+                  >
+                    <input
+                      type="radio"
+                      name={`correct-${index}`}
+                      checked={item.correctIndex === optionIndex}
+                      onChange={() => patch(index, { correctIndex: optionIndex })}
+                      aria-label={`Верный ответ: ${LETTERS[optionIndex]}`}
+                    />
+                    <span className="draft-letter">{LETTERS[optionIndex]}</span>
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(event) => {
+                        const options = [...item.options]
+                        options[optionIndex] = event.target.value
+                        patch(index, { options })
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
 
             <input
               className="draft-explanation"
