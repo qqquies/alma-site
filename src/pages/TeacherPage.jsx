@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import TeacherTabs from '../components/TeacherTabs'
 import { buildTest, DIFFICULTIES } from '../teacher/buildTest'
 import TOPICS, { getTopicById } from '../teacher/topics'
@@ -6,6 +6,7 @@ import { SUBJECTS, getSubjectById } from '../teacher/subjects'
 import { generateDraft, isMockMode } from '../teacher/ai'
 import DraftReview from '../teacher/DraftReview'
 import { TestSheet, AnswerKey } from '../teacher/TestSheet'
+import { loadWork, saveWork } from '../lib/lastWork'
 import './TeacherPage.css'
 
 const PROFILE_KEY = 'alma-teacher-profile'
@@ -14,6 +15,20 @@ const DEFAULT_PROFILE = {
   school: '',
   teacher: '',
   grade: '7',
+}
+
+const DEFAULT_SETTINGS = {
+  subjectId: 'physics',
+  topicId: 'kinematics',
+  customSubject: '',
+  topic: '',
+  count: 10,
+  difficultyId: 'mixed',
+  variantCount: 1,
+  minutes: 40,
+  showKey: true,
+  showSolutions: false,
+  showAnswerForm: true,
 }
 
 function loadProfile() {
@@ -29,6 +44,30 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, Number(value) || min))
 }
 
+function numberOr(value, fallback, min, max) {
+  return value === undefined || value === null
+    ? fallback
+    : clamp(value, min, max)
+}
+
+// Настройки последней работы. Если в браузере лежит старая или битая
+// запись, недостающие поля берём из значений по умолчанию.
+function loadSettings(saved) {
+  if (!saved || typeof saved !== 'object') return DEFAULT_SETTINGS
+
+  const subject = getSubjectById(saved.subjectId)
+
+  return {
+    ...DEFAULT_SETTINGS,
+    ...saved,
+    subjectId: subject.id,
+    topicId: getTopicById(saved.topicId).id,
+    count: numberOr(saved.count, DEFAULT_SETTINGS.count, 5, 20),
+    variantCount: numberOr(saved.variantCount, DEFAULT_SETTINGS.variantCount, 1, 2),
+    minutes: numberOr(saved.minutes, DEFAULT_SETTINGS.minutes, 10, 120),
+  }
+}
+
 function summarize(variant) {
   const counts = { basic: 0, advanced: 0, high: 0 }
   variant.items.forEach((item) => {
@@ -39,24 +78,24 @@ function summarize(variant) {
 }
 
 function TeacherPage() {
-  const [profile, setProfile] = useState(loadProfile)
-  const [settings, setSettings] = useState({
-    subjectId: 'physics',
-    topicId: 'kinematics',
-    customSubject: '',
-    topic: '',
-    count: 10,
-    difficultyId: 'mixed',
-    variantCount: 1,
-    minutes: 40,
-    showKey: true,
-    showSolutions: false,
-    showAnswerForm: true,
-  })
-  const [test, setTest] = useState(null)
-  const [draft, setDraft] = useState(null)
+  const [restored] = useState(loadWork)
+  const [profile, setProfile] = useState(() => ({
+    ...loadProfile(),
+    ...(restored?.profile || {}),
+  }))
+  const [settings, setSettings] = useState(() =>
+    loadSettings(restored?.settings),
+  )
+  const [test, setTest] = useState(restored?.test || null)
+  const [draft, setDraft] = useState(restored?.draft || null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Последняя собранная работа живёт в браузере: учитель может закрыть
+  // вкладку и вернуться к печати. Аккаунт и пароль для этого не нужны.
+  useEffect(() => {
+    saveWork({ settings, profile, test, draft })
+  }, [settings, profile, test, draft])
 
   const subject = getSubjectById(settings.subjectId)
   const isBank = subject.source === 'bank'
@@ -132,7 +171,13 @@ function TeacherPage() {
     const count = clamp(settings.count, 5, 20)
     const variantCount = clamp(settings.variantCount, 1, 2)
 
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
+    // Приватный режим браузера может запрещать localStorage —
+    // тогда работа просто не запомнится, но соберётся как обычно.
+    try {
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
+    } catch {
+      // Ничего не делаем: печать от этого не зависит.
+    }
 
     const built = buildTest({
       topicId: settings.topicId,
@@ -247,7 +292,8 @@ function TeacherPage() {
         <p className="teacher-hint no-print">
           В диалоге печати выберите принтер «Сохранить как PDF» — получится
           готовый файл для распечатки. Ключ ответов идёт отдельными листами,
-          его можно не печатать для учеников.
+          его можно не печатать для учеников. Работа сохранена в этом браузере:
+          к ней можно вернуться позже и распечатать заново.
         </p>
 
         <p className="teacher-summary no-print">{summarize(first)}</p>
@@ -594,6 +640,10 @@ function TeacherPage() {
           <p>
             В диалоге печати выберите «Сохранить как PDF». Ключ и пояснения
             идут отдельными листами — их можно не раздавать ученикам.
+          </p>
+          <p>
+            Последняя работа сохраняется в этом браузере. Закрыли вкладку —
+            вернулись и распечатали снова, без повторной сборки.
           </p>
         </div>
       </aside>

@@ -1,13 +1,25 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import TeacherTabs from '../components/TeacherTabs'
 import { SUBJECTS, getSubjectById } from '../teacher/subjects'
 import { generatePresentation, isMockMode } from '../teacher/ai'
 import { downloadPresentation } from '../teacher/presentation'
 import PresentationReview from '../teacher/PresentationReview'
+import {
+  loadPresentationWork,
+  savePresentationWork,
+} from '../lib/lastWork'
 import './TeacherPage.css'
 import './PresentationPage.css'
 
 const PROFILE_KEY = 'alma-teacher-profile'
+
+const DEFAULT_SETTINGS = {
+  subjectId: 'algebra',
+  customSubject: '',
+  topic: '',
+  count: 8,
+  grade: '',
+}
 
 function loadGrade() {
   try {
@@ -27,22 +39,48 @@ function saveGrade(grade) {
   }
 }
 
+// Настройки последнего черновика. Если запись старая или битая,
+// недостающие поля берём из значений по умолчанию.
+function loadSettings(saved) {
+  const base = {
+    ...DEFAULT_SETTINGS,
+    grade: loadGrade() || '8',
+  }
+
+  if (!saved || typeof saved !== 'object') return base
+
+  const subject = getSubjectById(saved.subjectId)
+
+  return {
+    ...base,
+    ...saved,
+    subjectId: subject.id,
+    count:
+      saved.count === undefined || saved.count === null
+        ? base.count
+        : clamp(saved.count, 4, 12),
+  }
+}
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, Number(value) || min))
 }
 
 function PresentationPage() {
-  const [settings, setSettings] = useState({
-    subjectId: 'algebra',
-    customSubject: '',
-    topic: '',
-    count: 8,
-    grade: loadGrade() || '8',
-  })
-  const [draft, setDraft] = useState(null)
+  const [restored] = useState(loadPresentationWork)
+  const [settings, setSettings] = useState(() =>
+    loadSettings(restored?.settings),
+  )
+  const [draft, setDraft] = useState(restored?.draft || null)
   const [loading, setLoading] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState('')
+
+  // Черновик презентации живёт в браузере: можно закрыть страницу,
+  // вернуться и скачать .pptx без повторной генерации.
+  useEffect(() => {
+    savePresentationWork({ settings, draft })
+  }, [settings, draft])
 
   const subject = getSubjectById(settings.subjectId)
 
@@ -260,6 +298,8 @@ function PresentationPage() {
             <p className="teacher-note">
               ИИ присылает черновик: вы проверите заголовки, пункты и заметки
               перед скачиванием. Обычно генерация занимает 15–40 секунд.
+              Черновик сохранится в этом браузере — можно закрыть страницу
+              и вернуться к скачиванию позже.
               {isMockMode() &&
                 ' Сейчас включён демонстрационный режим: структура настоящая, содержание шаблонное.'}
             </p>
