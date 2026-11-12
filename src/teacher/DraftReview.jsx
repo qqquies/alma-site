@@ -1,3 +1,9 @@
+import {
+  ArrowLeft,
+  Check,
+  RefreshCw,
+  Trash2,
+} from 'lucide-react'
 import { LEVELS } from './buildTest'
 
 const LETTERS = ['А', 'Б', 'В', 'Г']
@@ -41,7 +47,8 @@ function DraftReview({
     <section>
       <div className="teacher-bar no-print">
         <button type="button" className="t-btn" onClick={onBack}>
-          ← Изменить параметры
+          <ArrowLeft size={15} aria-hidden="true" />
+          Изменить параметры
         </button>
         <div className="teacher-bar-actions">
           <button
@@ -50,6 +57,7 @@ function DraftReview({
             onClick={onRegenerate}
             disabled={loading}
           >
+            <RefreshCw size={15} aria-hidden="true" />
             {loading ? 'Генерирую…' : 'Другой черновик'}
           </button>
           <button
@@ -58,6 +66,7 @@ function DraftReview({
             onClick={onConfirm}
             disabled={!ready || loading}
           >
+            <Check size={15} aria-hidden="true" />
             К печати
           </button>
         </div>
@@ -107,6 +116,7 @@ function DraftReview({
                 className="draft-remove"
                 onClick={() => remove(index)}
               >
+                <Trash2 size={13} aria-hidden="true" />
                 Удалить
               </button>
             </div>

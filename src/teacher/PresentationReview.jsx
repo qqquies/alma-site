@@ -2,6 +2,16 @@
 // Как и с контрольной, ИИ присылает черновик: учитель правит текст,
 // убирает лишние слайды и только потом собирает .pptx.
 
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from 'lucide-react'
+
 function PresentationReview({
   draft,
   meta,
@@ -57,7 +67,8 @@ function PresentationReview({
     <section>
       <div className="teacher-bar no-print">
         <button type="button" className="t-btn" onClick={onBack}>
-          ← Изменить параметры
+          <ArrowLeft size={15} aria-hidden="true" />
+          Назад в чат
         </button>
         <div className="teacher-bar-actions">
           <button
@@ -66,6 +77,7 @@ function PresentationReview({
             onClick={onRegenerate}
             disabled={loading || downloading}
           >
+            <RefreshCw size={15} aria-hidden="true" />
             {loading ? 'Генерирую…' : 'Другой черновик'}
           </button>
           <button
@@ -74,6 +86,7 @@ function PresentationReview({
             onClick={() => onDownload(cleanSlides())}
             disabled={!ready || loading || downloading}
           >
+            <Download size={15} aria-hidden="true" />
             {downloading ? 'Собираю файл…' : 'Скачать .pptx'}
           </button>
         </div>
@@ -155,7 +168,7 @@ function PresentationReview({
                   disabled={index === 0}
                   aria-label="Выше"
                 >
-                  ↑
+                  <ChevronUp size={15} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -164,13 +177,14 @@ function PresentationReview({
                   disabled={index === slides.length - 1}
                   aria-label="Ниже"
                 >
-                  ↓
+                  <ChevronDown size={15} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
                   className="draft-remove"
                   onClick={() => remove(index)}
                 >
+                  <Trash2 size={13} aria-hidden="true" />
                   Удалить
                 </button>
               </div>
@@ -211,7 +225,8 @@ function PresentationReview({
 
       <div className="teacher-actions no-print">
         <button type="button" className="t-btn" onClick={addSlide}>
-          + Добавить слайд
+          <Plus size={15} aria-hidden="true" />
+          Добавить слайд
         </button>
       </div>
 

@@ -1,25 +1,36 @@
 import { Link } from 'react-router-dom'
+import {
+  BrainCircuit,
+  GraduationCap,
+  MousePointerClick,
+  Presentation,
+  ShieldCheck,
+} from 'lucide-react'
 import Reveal from '../components/Reveal'
 import { HeroArt, StudentArt, TeacherArt } from '../components/Illustrations'
 import './HomePage.css'
 
 const FEATURES = [
   {
+    icon: MousePointerClick,
     number: '01',
     title: 'Уроки, которые можно потрогать',
     text: 'Световые часы, поезд и мяч: интерактивные модели показывают то, что сложно представить в голове.',
   },
   {
+    icon: ShieldCheck,
     number: '02',
     title: 'Проверка без подглядывания',
     text: 'Во время квиза материал скрыт. Задания идут от простого к сложному, а ответы считаются по формулам.',
   },
   {
+    icon: GraduationCap,
     number: '03',
     title: 'Оценка и пересдача',
     text: 'Итоговая работа оценивается по школьной шкале 2–5. Можно разобрать ошибки и пройти её заново.',
   },
   {
+    icon: Presentation,
     number: '04',
     title: 'Печать и презентации',
     text: 'Работы собираются в два варианта и печатаются на A4. Презентация скачивается как редактируемый .pptx.',
@@ -148,19 +159,31 @@ function HomePage() {
         </div>
 
         <div className="feature-grid">
-          {FEATURES.map((feature) => (
-            <article className="feature-card" key={feature.number}>
-              <span className="feature-number">{feature.number}</span>
-              <h3>{feature.title}</h3>
-              <p>{feature.text}</p>
-            </article>
-          ))}
+          {FEATURES.map((feature) => {
+            const Icon = feature.icon
+
+            return (
+              <article className="feature-card" key={feature.number}>
+                <span className="feature-top">
+                  <span className="feature-icon" aria-hidden="true">
+                    <Icon size={18} />
+                  </span>
+                  <span className="feature-number">{feature.number}</span>
+                </span>
+                <h3>{feature.title}</h3>
+                <p>{feature.text}</p>
+              </article>
+            )
+          })}
         </div>
       </Reveal>
 
       <Reveal as="section" className="ai-note">
         <div className="ai-note-copy">
-          <span className="kicker">Про ИИ честно</span>
+          <span className="kicker">
+            <BrainCircuit size={15} aria-hidden="true" />
+            Про ИИ честно
+          </span>
           <h2 className="section-title">
             ИИ готовит черновик. Решает учитель.
           </h2>

@@ -125,6 +125,10 @@
 }
 
 .t-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   color: var(--color-text);
@@ -464,6 +468,121 @@
   color: var(--color-text-dim);
 }
 
+.teacher-subject-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-right: 10px;
+  padding: 3px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  font-size: 12.5px;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+/* ---------- Класс и популярные темы ---------- */
+
+.grade-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.grade-chip {
+  padding: 7px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-dim);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.grade-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.grade-chip--active {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  color: var(--color-text);
+}
+
+.topic-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.topic-card {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 46px;
+  padding: 9px 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-bg-soft);
+  color: var(--color-text-dim);
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.topic-card:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.topic-card--active {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg-soft));
+  color: var(--color-text);
+}
+
+.topic-card-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-accent-strong);
+}
+
+.topic-card-note {
+  margin-left: auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-dim);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.topic-custom {
+  margin-top: 12px;
+}
+
+.teacher-aside-card--hint p svg {
+  margin-right: 4px;
+  vertical-align: -2px;
+  color: var(--color-accent-strong);
+}
+
 /* ---------- Сводка справа ---------- */
 
 .teacher-aside {
@@ -683,6 +802,9 @@
 }
 
 .draft-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   margin-left: auto;
   background: transparent;
   border: none;

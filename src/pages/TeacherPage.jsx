@@ -1,21 +1,33 @@
 import { useEffect, useState } from 'react'
+import { Navigate, useParams } from 'react-router-dom'
+import {
+  ArrowLeft,
+  BookOpen,
+  ClipboardList,
+  Clock3,
+  Printer,
+  RefreshCw,
+  Sparkles,
+} from 'lucide-react'
 import TeacherTabs from '../components/TeacherTabs'
 import { buildTest, DIFFICULTIES } from '../teacher/buildTest'
-import TOPICS, { getTopicById } from '../teacher/topics'
-import { SUBJECTS, getSubjectById } from '../teacher/subjects'
+import { getTopicById } from '../teacher/topics'
+import { findSubjectById } from '../teacher/subjects'
+import {
+  getFirstBankTopic,
+  getGradesForSubject,
+  getTopicsForGrade,
+} from '../teacher/curriculum'
+import {
+  getGradeForSubject,
+  loadProfile,
+  saveProfile,
+} from '../teacher/profile'
 import { generateDraft, isMockMode } from '../teacher/ai'
 import DraftReview from '../teacher/DraftReview'
 import { TestSheet, AnswerKey } from '../teacher/TestSheet'
 import { loadWork, saveWork } from '../lib/lastWork'
 import './TeacherPage.css'
-
-const PROFILE_KEY = 'alma-teacher-profile'
-
-const DEFAULT_PROFILE = {
-  school: '',
-  teacher: '',
-  grade: '7',
-}
 
 const DEFAULT_SETTINGS = {
   subjectId: 'physics',
@@ -31,15 +43,6 @@ const DEFAULT_SETTINGS = {
   showAnswerForm: true,
 }
 
-function loadProfile() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}')
-    return { ...DEFAULT_PROFILE, ...saved }
-  } catch {
-    return DEFAULT_PROFILE
-  }
-}
-
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, Number(value) || min))
 }
@@ -51,20 +54,40 @@ function numberOr(value, fallback, min, max) {
 }
 
 // Настройки последней работы. Если в браузере лежит старая или битая
-// запись, недостающие поля берём из значений по умолчанию.
-function loadSettings(saved) {
-  if (!saved || typeof saved !== 'object') return DEFAULT_SETTINGS
+// запись, недостающие поля берём из значений по умолчанию. Чужие
+// настройки не подмешиваем: предмет задаётся адресом страницы.
+function loadSettings(saved, subject, grade) {
+  const bankTopic = subject.source === 'bank' ? getFirstBankTopic(subject.id, grade) : null
+  const availableBankIds = new Set(
+    getTopicsForGrade(subject.id, grade)
+      .map((topic) => topic.bankId)
+      .filter(Boolean),
+  )
+  const base = {
+    ...DEFAULT_SETTINGS,
+    subjectId: subject.id,
+    topicId: bankTopic?.bankId || 'kinematics',
+    count: subject.source === 'bank' ? 10 : 8,
+    customSubject:
+      subject.id === 'custom' ? loadProfile().customSubject || '' : '',
+  }
 
-  const subject = getSubjectById(saved.subjectId)
+  if (!saved || saved.subjectId !== subject.id) return base
 
   return {
-    ...DEFAULT_SETTINGS,
+    ...base,
     ...saved,
     subjectId: subject.id,
-    topicId: getTopicById(saved.topicId).id,
-    count: numberOr(saved.count, DEFAULT_SETTINGS.count, 5, 20),
-    variantCount: numberOr(saved.variantCount, DEFAULT_SETTINGS.variantCount, 1, 2),
-    minutes: numberOr(saved.minutes, DEFAULT_SETTINGS.minutes, 10, 120),
+    topicId:
+      saved.topicId && availableBankIds.has(saved.topicId)
+        ? saved.topicId
+        : base.topicId,
+    count: numberOr(saved.count, base.count, 5, subject.source === 'bank' ? 20 : 15),
+    variantCount: numberOr(saved.variantCount, base.variantCount, 1, 2),
+    minutes: numberOr(saved.minutes, base.minutes, 10, 120),
+    difficultyId: DIFFICULTIES.some((item) => item.id === saved.difficultyId)
+      ? saved.difficultyId
+      : base.difficultyId,
   }
 }
 
@@ -81,16 +104,46 @@ function summarize(variant) {
 }
 
 function TeacherPage() {
-  const [restored] = useState(loadWork)
-  const [profile, setProfile] = useState(() => ({
-    ...loadProfile(),
-    ...(restored?.profile || {}),
-  }))
+  const { subjectId } = useParams()
+  const subject = findSubjectById(subjectId)
+
+  if (!subject) {
+    return <Navigate to="/teacher" replace />
+  }
+
+  return <TeacherWorkbench subject={subject} />
+}
+
+function TeacherWorkbench({ subject }) {
+  const [initial] = useState(() => {
+    const savedWork = loadWork()
+    const work =
+      savedWork?.settings?.subjectId === subject.id ? savedWork : null
+    const savedProfile = loadProfile()
+    const profile = work?.profile
+      ? {
+          ...savedProfile,
+          ...work.profile,
+          subjectGrades: {
+            ...savedProfile.subjectGrades,
+            ...(work.profile.subjectGrades || {}),
+          },
+        }
+      : savedProfile
+
+    return { work, profile }
+  })
+
+  const [profile, setProfile] = useState(initial.profile)
   const [settings, setSettings] = useState(() =>
-    loadSettings(restored?.settings),
+    loadSettings(
+      initial.work?.settings,
+      subject,
+      getGradeForSubject(initial.profile, subject),
+    ),
   )
-  const [test, setTest] = useState(restored?.test || null)
-  const [draft, setDraft] = useState(restored?.draft || null)
+  const [test, setTest] = useState(initial.work?.test || null)
+  const [draft, setDraft] = useState(initial.work?.draft || null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -100,9 +153,12 @@ function TeacherPage() {
     saveWork({ settings, profile, test, draft })
   }, [settings, profile, test, draft])
 
-  const subject = getSubjectById(settings.subjectId)
+  const SubjectIcon = subject.icon
   const isBank = subject.source === 'bank'
   const topic = getTopicById(settings.topicId)
+  const subjectGrade = getGradeForSubject(profile, subject)
+  const gradeOptions = getGradesForSubject(subject.id)
+  const topicOptions = getTopicsForGrade(subject.id, subjectGrade)
 
   // Название предмета: у «Другого предмета» его вводит учитель.
   const subjectTitle =
@@ -126,22 +182,41 @@ function TeacherPage() {
     setProfile((prev) => ({ ...prev, [field]: value }))
   }
 
-  function handleSubject(value) {
-    const next = getSubjectById(value)
-    setSettings((prev) => ({
-      ...prev,
-      subjectId: value,
-      topic: '',
-      count: next.source === 'ai' ? Math.min(prev.count, 15) : prev.count,
-    }))
-    setError('')
-    if (next.grade) updateProfile('grade', next.grade)
+  function handleGrade(value) {
+    const next = {
+      ...profile,
+      grade: value,
+      subjectGrades: {
+        ...profile.subjectGrades,
+        [subject.id]: value,
+      },
+    }
+
+    setProfile(next)
+    saveProfile(next)
+
+    // В банке тема привязана к классу. Если выбранная тема в новом
+    // классе недоступна, предлагаем первую подходящую.
+    if (isBank) {
+      const available = getTopicsForGrade(subject.id, value)
+      const stillAvailable = available.some(
+        (item) => item.bankId === settings.topicId,
+      )
+
+      if (!stillAvailable) {
+        const first = getFirstBankTopic(subject.id, value)
+        update('topicId', first?.bankId || 'mixed')
+      }
+    }
   }
 
-  function handleTopic(value) {
-    const next = getTopicById(value)
-    update('topicId', value)
-    if (next.grade) updateProfile('grade', next.grade)
+  function chooseTopic(topicItem) {
+    if (isBank) {
+      if (topicItem.bankId) update('topicId', topicItem.bankId)
+      return
+    }
+
+    update('topic', topicItem.title)
   }
 
   function buildMeta() {
@@ -151,7 +226,7 @@ function TeacherPage() {
       subjectTitle,
       workTitle,
       topicTitle,
-      grade: profile.grade || subject.grade,
+      grade: subjectGrade || subject.grade,
       date: new Date().toLocaleDateString('ru-RU'),
       minutes: settings.minutes,
       showAnswerForm: settings.showAnswerForm,
@@ -161,7 +236,7 @@ function TeacherPage() {
 
   function checkForm() {
     if (!isBank && !settings.topic.trim()) {
-      return 'Введите тему работы — например, «Линейные уравнения».'
+      return 'Выберите популярную тему или введите свою — например, «Линейные уравнения».'
     }
     if (subject.id === 'custom' && !settings.customSubject.trim()) {
       return 'Введите название предмета — оно попадёт в заголовок работы.'
@@ -176,11 +251,7 @@ function TeacherPage() {
 
     // Приватный режим браузера может запрещать localStorage —
     // тогда работа просто не запомнится, но соберётся как обычно.
-    try {
-      localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
-    } catch {
-      // Ничего не делаем: печать от этого не зависит.
-    }
+    saveProfile(profile)
 
     const built = buildTest({
       topicId: settings.topicId,
@@ -207,11 +278,12 @@ function TeacherPage() {
 
     setLoading(true)
     setError('')
+    saveProfile(profile)
 
     try {
       const result = await generateDraft({
         subject: subjectTitle,
-        grade: profile.grade || subject.grade,
+        grade: subjectGrade || subject.grade,
         topic: settings.topic.trim(),
         count: clamp(settings.count, 5, 15),
         difficulty: settings.difficultyId,
@@ -263,6 +335,7 @@ function TeacherPage() {
 
     return (
       <section>
+        <TeacherTabs subjectId={subject.id} />
         <div className="teacher-bar no-print">
           <button
             type="button"
@@ -272,7 +345,8 @@ function TeacherPage() {
               window.scrollTo(0, 0)
             }}
           >
-            ← Изменить параметры
+            <ArrowLeft size={15} aria-hidden="true" />
+            Изменить параметры
           </button>
           <div className="teacher-bar-actions">
             <button
@@ -280,6 +354,7 @@ function TeacherPage() {
               className="t-btn"
               onClick={() => (test.source === 'ai' ? runAI() : runBank())}
             >
+              <RefreshCw size={15} aria-hidden="true" />
               {test.source === 'ai' ? 'Сгенерировать заново' : 'Другой вариант'}
             </button>
             <button
@@ -287,6 +362,7 @@ function TeacherPage() {
               className="t-btn t-btn--primary"
               onClick={() => window.print()}
             >
+              <Printer size={15} aria-hidden="true" />
               Печать / PDF
             </button>
           </div>
@@ -319,6 +395,7 @@ function TeacherPage() {
   if (draft) {
     return (
       <>
+        <TeacherTabs subjectId={subject.id} />
         {error && <p className="teacher-error no-print">{error}</p>}
         <DraftReview
           draft={draft}
@@ -339,38 +416,105 @@ function TeacherPage() {
 
   return (
     <section className="teacher-page">
-      <TeacherTabs />
-      <h1 className="page-title">Для учителя</h1>
+      <TeacherTabs subjectId={subject.id} />
+      <h1 className="page-title">Контрольные работы</h1>
       <p className="teacher-intro">
-        Конструктор контрольных работ. Выберите предмет, тему и сложность —
-        Alma соберёт вариант с заданиями разного уровня, ключом ответов и
-        паспортом работы, который останется только распечатать.
+        <span className="teacher-subject-chip">
+          <SubjectIcon size={15} aria-hidden="true" />
+          {subjectTitle}
+        </span>
+        Выберите класс и популярную тему — Alma соберёт вариант с заданиями
+        разного уровня, ключом ответов и паспортом работы, который останется
+        только распечатать.
       </p>
 
       <form className="teacher-form" onSubmit={submitForm}>
-        <h2 className="teacher-section">Предмет</h2>
+        <h2 className="teacher-section">Тема контрольной</h2>
+
         <div className="teacher-field teacher-field--wide">
-          <span>Что проверяем</span>
-          <div className="subject-grid">
-            {SUBJECTS.map((item) => (
+          <span>Класс</span>
+          <div className="grade-chips" role="group" aria-label="Класс">
+            {gradeOptions.map((grade) => (
               <button
                 type="button"
-                key={item.id}
-                className={`subject-chip${
-                  settings.subjectId === item.id ? ' subject-chip--active' : ''
+                key={grade}
+                className={`grade-chip${
+                  subjectGrade === grade ? ' grade-chip--active' : ''
                 }`}
-                onClick={() => handleSubject(item.id)}
+                aria-pressed={subjectGrade === grade}
+                onClick={() => handleGrade(grade)}
               >
-                {item.title}
+                {grade} класс
               </button>
             ))}
           </div>
-          <p className="subject-source">
-            {isBank
-              ? 'Банк Alma: задания и ответы считаются на устройстве. Работает без интернета.'
-              : 'Черновик ИИ: модель предложит задания, вы проверите ответы перед печатью.'}
-          </p>
         </div>
+
+        {topicOptions.length > 0 && (
+          <div className="topic-picker" role="group" aria-label="Популярные темы">
+            {topicOptions.map((topicItem) => {
+              const selected = isBank
+                ? settings.topicId === topicItem.bankId
+                : settings.topic === topicItem.title
+
+              return (
+                <button
+                  type="button"
+                  key={topicItem.id}
+                  className={`topic-card${selected ? ' topic-card--active' : ''}`}
+                  aria-pressed={selected}
+                  onClick={() => chooseTopic(topicItem)}
+                >
+                  <span className="topic-card-icon" aria-hidden="true">
+                    <BookOpen size={16} />
+                  </span>
+                  <span>{topicItem.title}</span>
+                  {topicItem.testsOnly && (
+                    <span className="topic-card-note">все темы</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {!isBank && (
+          <label className="teacher-field teacher-field--wide topic-custom">
+            <span>Своя тема</span>
+            <input
+              type="text"
+              value={settings.topic}
+              placeholder={
+                subject.examples[0]
+                  ? `Например, «${subject.examples[0]}»`
+                  : 'Например, «Строение клетки»'
+              }
+              onChange={(event) => update('topic', event.target.value)}
+            />
+          </label>
+        )}
+
+        <p className="subject-source">
+          {isBank
+            ? 'Банк Alma: задания и ответы считаются на устройстве, без интернета. Темы подобраны под выбранный класс.'
+            : 'ИИ-черновик: модель предложит задания по теме, вы проверите формулировки и ответы перед печатью.'}
+        </p>
+
+        {topicOptions.length === 0 && !isBank && subject.examples.length > 0 && (
+          <div className="topic-hints">
+            <span>Примеры тем:</span>
+            {subject.examples.map((example) => (
+              <button
+                type="button"
+                key={example}
+                className="topic-hint"
+                onClick={() => update('topic', example)}
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+        )}
 
         <h2 className="teacher-section">Оформление работы</h2>
         <div className="teacher-grid">
@@ -390,15 +534,6 @@ function TeacherPage() {
               value={profile.teacher}
               placeholder="Иванова А. П."
               onChange={(event) => updateProfile('teacher', event.target.value)}
-            />
-          </label>
-          <label className="teacher-field">
-            <span>Класс</span>
-            <input
-              type="text"
-              value={profile.grade}
-              placeholder="8"
-              onChange={(event) => updateProfile('grade', event.target.value)}
             />
           </label>
           <label className="teacher-field">
@@ -427,37 +562,6 @@ function TeacherPage() {
                 onChange={(event) =>
                   update('customSubject', event.target.value)
                 }
-              />
-            </label>
-          )}
-
-          {isBank ? (
-            <label className="teacher-field teacher-field--wide">
-              <span>Тема</span>
-              <select
-                value={settings.topicId}
-                onChange={(event) => handleTopic(event.target.value)}
-              >
-                {TOPICS.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title}
-                    {item.grade ? ` (${item.grade} класс)` : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : (
-            <label className="teacher-field teacher-field--wide">
-              <span>Тема</span>
-              <input
-                type="text"
-                value={settings.topic}
-                placeholder={
-                  subject.examples[0]
-                    ? `Например, «${subject.examples[0]}»`
-                    : 'Например, «Строение клетки»'
-                }
-                onChange={(event) => update('topic', event.target.value)}
               />
             </label>
           )}
@@ -502,22 +606,6 @@ function TeacherPage() {
             </label>
           )}
         </div>
-
-        {!isBank && subject.examples.length > 0 && (
-          <div className="topic-hints">
-            <span>Примеры тем:</span>
-            {subject.examples.map((example) => (
-              <button
-                type="button"
-                key={example}
-                className="topic-hint"
-                onClick={() => update('topic', example)}
-              >
-                {example}
-              </button>
-            ))}
-          </div>
-        )}
 
         {isBank && settings.count > 8 && settings.topicId !== 'mixed' && (
           <p className="teacher-note">
@@ -576,6 +664,11 @@ function TeacherPage() {
             className="t-btn t-btn--primary"
             disabled={loading}
           >
+            {isBank ? (
+              <ClipboardList size={16} aria-hidden="true" />
+            ) : (
+              <Sparkles size={16} aria-hidden="true" />
+            )}
             {loading
               ? 'Генерирую черновик…'
               : isBank
@@ -600,11 +693,11 @@ function TeacherPage() {
             </div>
             <div>
               <dt>Тема</dt>
-              <dd>{topicTitle || 'укажите тему'}</dd>
+              <dd>{topicTitle || 'выберите тему'}</dd>
             </div>
             <div>
               <dt>Класс</dt>
-              <dd>{profile.grade || subject.grade || '—'}</dd>
+              <dd>{subjectGrade || '—'}</dd>
             </div>
             <div>
               <dt>Заданий</dt>
@@ -642,8 +735,9 @@ function TeacherPage() {
         <div className="teacher-aside-card teacher-aside-card--hint">
           <span className="teacher-aside-label">Памятка</span>
           <p>
-            В диалоге печати выберите «Сохранить как PDF». Ключ и пояснения
-            идут отдельными листами — их можно не раздавать ученикам.
+            <Clock3 size={13} aria-hidden="true" /> В диалоге печати выберите
+            «Сохранить как PDF». Ключ и пояснения идут отдельными листами — их
+            можно не раздавать ученикам.
           </p>
           <p>
             Последняя работа сохраняется в этом браузере. Закрыли вкладку —

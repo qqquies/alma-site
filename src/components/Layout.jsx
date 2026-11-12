@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { GraduationCap } from 'lucide-react'
 import LogoMark from './LogoMark'
 import ThemeToggle from './ThemeToggle'
 import './Layout.css'
@@ -57,6 +58,7 @@ function Layout({ children }) {
                 `nav-teacher${isActive ? ' active' : ''}`
               }
             >
+              <GraduationCap size={16} aria-hidden="true" />
               Для учителя
             </NavLink>
           </nav>
@@ -64,7 +66,7 @@ function Layout({ children }) {
           <div className="header-actions">
             <ThemeToggle />
             <Link to="/teacher" className="teacher-link">
-              <span className="teacher-link-dot" aria-hidden="true" />
+              <GraduationCap size={16} aria-hidden="true" />
               Для учителя
             </Link>
             <button

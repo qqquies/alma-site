@@ -153,6 +153,14 @@ th {
   font-weight: bold;
 }
 
+thead {
+  display: table-header-group;
+}
+
+tr {
+  break-inside: avoid;
+}
+
 td code {
   overflow-wrap: anywhere;
 }

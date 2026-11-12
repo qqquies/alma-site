@@ -313,7 +313,10 @@
   }
 
   .nav a.nav-teacher {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
     margin-top: 6px;
     border-radius: 10px;
     background: var(--color-accent);
